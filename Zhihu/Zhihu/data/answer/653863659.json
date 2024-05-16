@@ -1,0 +1,146 @@
+[
+    {
+        "answer_id": 3476115054,
+        "content": "学编译器用C吧，资源比较多，例如著名的c4 c compiler对新手非常友好，只有4个函数，所以名字叫C4，代码也只有500行以内，很多初学者都以它作为入门参考的首选，稍微懂点编译原理的人，抄一遍它的代码，就学会了。C4还有一个特性就是可以编译它自己，就是说，它实现的是C语言的子集，但是自己也用这个子集编写而成。gcc -o c4 c4.c\n./c4 hello.c\n./c4 -s hello.c\n\n./c4 c4.c hello.c  // 编译自己\n./c4 c4.c c4.c hello.cc4已经有9000多star，地址在：https://github.com/rswier/c4参考c4实现的简易编译器并附带详细的中文文档，也有几千star：https://github.com/lotabout/write-a-C-interpreter这一系列的文章写得不错，转载的人很多，当然也的确是非常优秀的学习资源，任何新手看了都会收获巨大：加上了中文注释的c4：https://github.com/comzyh/c4英文系列教程可以看这个链接：https://norasandler.com/archive/",
+        "voteup_count": 209,
+        "updated_time": "2024-04-23 19:03:27",
+        "question_id": 653863659,
+        "user_id": "f0e32fc7648329a413412d0cbba392c8"
+    },
+    {
+        "answer_id": 3476747792,
+        "content": "首选自己熟悉什么语言就选什么。如果都比较熟悉首选C，倒不是写起来有什么特别的优势的地方，就是github上很多小型Demo编译器都是C、C艹写的,找参考比较好找.如果你要写windows上的exe程序,大部分有关PE格式和x86 x64的相关资料用的示例代码很可能也是C或者C艹。如果你不想搓编译器后端只想前端尝尝鲜的话，后端调包llvm就可以了，可以把重点放在词法语法解析上，后端其实很多内容和编译器理论不是太搭边，和平台硬件相关，处理起来很多跨领域知识，自己做很麻烦。以上。",
+        "voteup_count": 24,
+        "updated_time": "2024-04-24 11:01:52",
+        "question_id": 653863659,
+        "user_id": "3de93df9501c2b532004784d0e1ff44f"
+    },
+    {
+        "answer_id": 3477559574,
+        "content": "如果你对C没那么熟练，nodejs显然更合适，而且还有一堆现成的库比如parser generator之类可用，哪个不比lex/yacc方便多了，另外还可以直接对接llvm做后端，这样你只需要生成ir就好了。不过自制语言/编译器最麻烦的事情其实是选择语言特性，一些高级特性看起来很美，可实现起来超级麻烦，甚至可能从根上改变语言和编译器的整体设计，比如闭包或者hkt之类。如果只是想练练手，建议做个简单的语言就好，比如pascal、qbasic，或者mini c，如果只是想尝个鲜，甚至可以选brainfuck或者whitespace。",
+        "voteup_count": 3,
+        "updated_time": "2024-04-24 23:47:13",
+        "question_id": 653863659,
+        "user_id": "630612ff80641e9ec165af192743a792"
+    },
+    {
+        "answer_id": 3477531356,
+        "content": "用LLVM做个简单的编译器我们先看一个使用LLVM工具之后，实现一门编程语言的简图：完全需要我们手工，或者依靠其他工具如lex, yacc来做的事情，是从源代码到token的词法分析和从token到AST的语法分析。也就是前端的主要部分需要我们来实现，毕竟我们是这门语言的定义者。在介绍LLVM的书里，讲前端的部分都是只占很小的篇幅的，所以大家可以take it easy.在LLVM的万花筒语言例子里，带有注释的词法分析和语法分析也不过400行。大家如果觉得还复杂，后面我会带大家做一些更简单的，先完成一小部分功能，然后迭代式开发。区区百余行代码，不需要学习编译原理。比如Clang就是一个实现了C/C++/Objective-C的前端。从AST转LLVM开始，LLVM就开始提供一系列的工具帮助我们快速开发。从IR(中间指令代码)到DAG(有向无环图)再到机器指令，针对常用的平台，LLVM有完善的后端。也就是说，我们只要完成了到IR这一步，后面的工作我们就享有和Clang一样的先进生产力了。口说无凭，有例子为证，这是将二元表达式AST转成IR的函数：Value *BinaryExprAST::codegen() {\n...\n  switch (Op) {\n  case '+':\n    return Builder.CreateFAdd(L, R, \"addtmp\");\n  case '-':\n    return Builder.CreateFSub(L, R, \"subtmp\");\n  case '*':\n    return Builder.CreateFMul(L, R, \"multmp\");\n  case '<':\n    L = Builder.CreateFCmpULT(L, R, \"cmptmp\");\n    // Convert bool 0/1 to double 0.0 or 1.0\n    return Builder.CreateUIToFP(L, Type::getDoubleTy(TheContext), \"booltmp\");\n  default:\n...\n  }\n}\n如何生成加减乘除的IR，在这个阶段完全不用关心，LLVM会帮我们生成相应的代码。下面我们再看一个声明函数原型的：Function *PrototypeAST::codegen() {\n \n \n  // Make the function type:  double(double,double) etc.\n  std::vector<Type *> Doubles(Args.size(), Type::getDoubleTy(TheContext));\n  FunctionType *FT =\n      FunctionType::get(Type::getDoubleTy(TheContext), Doubles, false);\n \n \n  Function *F =\n      Function::Create(FT, Function::ExternalLinkage, Name, TheModule.get());\n \n \n  // Set names for all arguments.\n  unsigned Idx = 0;\n  for (auto &Arg : F->args())\n    Arg.setName(Args[Idx++]);\n \n \n  return F;\n}\n词法分析在正则表达式已经成为基本技能的今天，词法分析完全无门槛啊。正常情况下，我们只要写一组正则表达式，或者写个简单的状态机就可以了。词法分析的输出是将源代码解析成一个个的token。这些token就是有类型和值的一些小单元，比如是关键字，还是数字，还是标识符等等。这个阶段不用管它们是如何组合的，都是干嘛的。比如一个token类型是数值，值是3. 这个信息就已经足够了，至于这个3干嘛用，后面整理AST的时候再放到合适的位置上去。至于什么时上下文无关语言，什么是确定有穷自动机，非确定有穷自动机等等这些，暂时都不需要了解。语法分析语法分析诚然是比词法分析要复杂一些。但是幸运的是，对于绝大多数语句和表达式来讲，并不需要高深的知识，“移进-归约”是个好方法，但是在我们学习的相当长的一段时期内都用不上。语法分析的输出是抽象语法树AST，既然是棵树，自然构造时需要递归。所以在大部分的语句中，我们只按递归下降的方法就足够了。对于表达式，递归下降还不够用，至少运算符还有优先级啊。所以针对表达式，我们还需要运算符优先分析法。SLR，LALR和LR暂时还用不上。语法制导翻译和中间代码生成从前面的简单例子中我们已经看到了，这部分大部分调用LLVM为我们提供的IR构造工具就可以了。入门阶段我们能想到的，如代码块，函数调用，控制结构等，LLVM都为我们准备好了。优化LLVM主我们提供了大量的优化Pass供我们选择和组合。在IR阶段和机器码阶段，我们都将花大量的篇幅来讨论优化。这可能也是我们真正感兴趣的部分。词法分析很简单我们看一个官方的例子，首先定义token的类型，有一种算一种吧。将来扩展都是体力活。enum Token {  tok_eof = -1,\n...\n  // primary\n  tok_identifier = -4,\n  tok_number = -5\n};然后就是解析正则表达式，一点技术含量也没有，哈哈~我对官方的版本做了一点删节，看起来可以更清楚一些：static std::string IdentifierStr; // Filled in if tok_identifierstatic double NumVal;             // Filled in if tok_number\n \n \n/// gettok - Return the next token from standard input.\nstatic int gettok() {\n  static int LastChar = ' ';\n \n \n  // Skip any whitespace.\n  while (isspace(LastChar))\n    LastChar = getchar();\n \n \n  if (isalpha(LastChar)) { // identifier: [a-zA-Z][a-zA-Z0-9]*\n    IdentifierStr = LastChar;\n    while (isalnum((LastChar = getchar())))\n      IdentifierStr += LastChar;\n...\n    return tok_identifier;\n  }\n \n \n  if (isdigit(LastChar) || LastChar == '.') { // Number: [0-9.]+\n    std::string NumStr;\n    do {\n      NumStr += LastChar;\n      LastChar = getchar();\n    } while (isdigit(LastChar) || LastChar == '.');\n \n \n    NumVal = strtod(NumStr.c_str(), nullptr);\n    return tok_number;\n  }\n ...\n  // Check for end of file.  Don't eat the EOF.\n  if (LastChar == EOF)\n    return tok_eof;\n...\n}\n如果不想手写的话，lex, flex之类的工具很多，就是根据正则表达式来决定token类型，根据类型存一下对应的值。如果token的类型多，就是搭积木，写正则。都是体力活~够用的语法分析其实也很简单上面介绍了，我们自顶向下，构造抽象语法树。先定义个根类型吧：/// ExprAST - Base class for all expression nodes.class ExprAST {\npublic:\n  virtual ~ExprAST() {}\n  virtual Value *codegen() = 0;\n};我们先来个简单的，就表示一个数字。这个好办，就一个节点，存个数值。/// NumberExprAST - Expression class for numeric literals like \"1.0\".class NumberExprAST : public ExprAST {\n  double Val;\n \n \npublic:\n  NumberExprAST(double Val) : Val(Val) {}\n  Value *codegen() override;\n};再来一个例子，变量，就是一个变量名么。赋值是下一步的事情了。/// VariableExprAST - Expression class for referencing a variable, like \"a\".\nclass VariableExprAST : public ExprAST {\n  std::string Name;\n \n \npublic:\n  VariableExprAST(const std::string &Name) : Name(Name) {}\n  Value *codegen() override;\n \n \n};函数原型：/// PrototypeAST - This class represents the \"prototype\" for a function,\n/// which captures its name, and its argument names (thus implicitly the number\n/// of arguments the function takes).\nclass PrototypeAST {\n  std::string Name;\n  std::vector<std::string> Args;\n \n \npublic:\n  PrototypeAST(const std::string &Name, std::vector<std::string> Args)\n      : Name(Name), Args(std::move(Args)) {}\n  Function *codegen();\n  const std::string &getName() const { return Name; }\n};然后我们再看看如何通过token去构造一个数值的AST:词法分析时，已经把这个数值暂存了，我们把它拿来用就是了。/// numberexpr ::= number\nstatic std::unique_ptr<ExprAST> ParseNumberExpr() {\n  auto Result = llvm::make_unique<NumberExprAST>(NumVal);\n  getNextToken(); // consume the number\n  return std::move(Result);\n}再看看函数声明的：/// prototype\n///   ::= id '(' id* ')'\nstatic std::unique_ptr<PrototypeAST> ParsePrototype() {\n  if (CurTok != tok_identifier)\n    return LogErrorP(\"Expected function name in prototype\");\n \n \n  std::string FnName = IdentifierStr;\n  getNextToken();\n \n \n  if (CurTok != '(')\n    return LogErrorP(\"Expected '(' in prototype\");\n \n \n  std::vector<std::string> ArgNames;\n  while (getNextToken() == tok_identifier)\n    ArgNames.push_back(IdentifierStr);\n  if (CurTok != ')')\n    return LogErrorP(\"Expected ')' in prototype\");\n \n \n  // success.\n  getNextToken(); // eat ')'.\n \n \n  return llvm::make_unique<PrototypeAST>(FnName, std::move(ArgNames));\n \n \n}\n先读函数名，再找左括号，然后是参数列表，最后是处理右括号。什么嘛，一点技术含量也没有。。。上面例子这些，都是没有嵌套的，也不需要递归下降和算符优先。这些是处理比如二元表达式的时候才会遇到的。我们可以先学习容易的，先能把这些容易的组件组成一门虽然语言功能不全，但是真正实现了从源码到机器指令的编译器。上面的例子都来自官方的例子万花筒(Keleidoscope)语言的片段。官方教程当然写得已经足够好，但是还是稍嫌复杂了点，能生成一个可玩的编译器的速度还是有点慢。我打算把学习曲线再降低一下，通过不断地迭代，一点一点搭起可玩的编译器，然后慢慢扩充功能。Hello,LLVMLLVM的下载先下载LLVMsvn co http://llvm.org/svn/llvm-project/llvm/trunk llvm在LLVM的tools目录下，下载Clang(可选，但是建议):cd llvm/tools\nsvn co http://llvm.org/svn/llvm-project/cfe/trunk clang在LLVM的projects目录下，可选下载compiler-rt，Libomp，libcxx，libcxxabi。svn co 403 Forbidden compiler-rtsvn co 403 Forbidden openmpsvn co 403 Forbidden libcxxsvn co 403 Forbidden libcxxabiLLVM的编译既然官方说大部分LLVM的开发者都使用Ninja，我们也就follow他们吧。我在Mac下，所以使用Homebrew来安装CMake和Ninja。Linux与些类似，GCC版本太旧之类的请自助。Windows我还没试过，后面更新一下吧。在LLVM目录下创建build目录cd buildcmake -G NinjaNinja写个LLVM上的Hello,World程序吧从AST转IR开始，我们都要用到LLVM的工具啦。先写个小程序学习一下LLVM的程序是如何编译的吧：#include \"llvm/IR/Module.h\"\n#include \"llvm/IR/IRBuilder.h\"\n#include \"llvm/IR/LLVMContext.h\"\n#include <cstdlib>\n#include <map>\n#include <memory>\n#include <string>\n#include <vector>\n \n \nstatic llvm::LLVMContext TheContext;\nstatic llvm::IRBuilder<> Builder(TheContext);\nstatic std::unique_ptr<llvm::Module> TheModule;\nstatic std::map<std::string, llvm::Value *> NameValues;\n \n \nint main(){\n TheModule = llvm::make_unique<llvm::Module>(\"hello,llvm\",TheContext);\n \n \n TheModule -> dump();\n return 0;\n}\n输出结果如下：; ModuleID = 'hello,llvm'\nsource_filename = \"hello,llvm\"如何链接LLVM的库使用LLVM库的话，需要一大堆参数.下面是在我的电脑上的参数：-I/Users/ziyingliuziying/lusing/llvm/llvm/include -I/Users/ziyingliuziying/lusing/llvm/llvm/build/include  -fPIC -fvisibility-inlines-hidden -Wall -W -Wno-unused-parameter -Wwrite-strings -Wcast-qual -Wmissing-field-initializers -pedantic -Wno-long-long -Wcovered-switch-default -Wnon-virtual-dtor -Wdelete-non-virtual-dtor -Werror=date-time -std=c++11 -fcolor-diagnostics   -fno-exceptions -fno-rtti -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS\n-L/Users/ziyingliuziying/lusing/llvm/llvm/build/lib -Wl,-search_paths_first -Wl,-headerpad_max_install_names\n-lLLVMCore -lLLVMSupport\n-lcurses -lz -lm每次都这么写吓死人了啊。于是LLVM为我们提供了llvm-config工具。刚才我那一大串，是用下面的命令行生成的：llvm-config --cxxflags --ldflags --system-libs --libs core完整的编译命令可以这么写：clang++ -g toy.cpp `llvm-config --cxxflags --ldflags --system-libs --libs core` -o toy",
+        "voteup_count": 7,
+        "updated_time": "2024-04-24 23:12:18",
+        "question_id": 653863659,
+        "user_id": "3c636da90aa2d89f38d83a7e4a41e904"
+    },
+    {
+        "answer_id": 3476173279,
+        "content": "看你更熟悉哪种语言。用 c 的话，你设计数据结构的时候还要考虑内存分布和管理。除此之外，区别不大。",
+        "voteup_count": 2,
+        "updated_time": "2024-04-23 20:15:03",
+        "question_id": 653863659,
+        "user_id": "7588d554ea77bf5ff4d3ca57456efeec"
+    },
+    {
+        "answer_id": 3476694592,
+        "content": "建议放弃；正常情况下，一个demo级别的编译器(+解释器)，是顶级大学计算机学生一(俩)个学期编译课后才能完成的“大作业”。初学者，需要补充大量的知识才能够自己从零开始。但也可以在不系统学习的情况下，逐步深入（也需要数月）：1、表达式：1+2*3，可以翻译成以下可执行的结构------中缀：1 + (2 * 3)------前缀：+ 1 * 2 3------后缀：2 3 * 1 +---这里面涉及到优先级（中缀），AST（前缀），字节码（后缀）；建议初期直接执行AST。2、复杂结构：赋值、分支、循环、函数。------赋值：这将开始需要“运行环境”用来存放变量------分支、循环：主要是开始支持跳转------函数：引入函数栈、参数压栈等支持---这里基本上就是一个demo级别的语言了(编译器+解释器)3、高级特性：异常、析构、堆对象管理、类型系统等---这里基本上和编译器关系不大；更多的工作是在执行环境(虚拟机)，这将需要更多的知识与时间。另外，选择宿主语言也至关重要。在功能一样的情况下，如果想要快速实现且不关注虚拟机细节，可以使用带虚拟机的语言（C#、JAVA等）；如想要完全自主，则C++(几乎)是唯一的选择。PS：其实可以止步于表达式(数周)；然后实现一个功能完整的正则表达式(已经可以大吹特吹了）。",
+        "voteup_count": 8,
+        "updated_time": "2024-04-24 10:31:35",
+        "question_id": 653863659,
+        "user_id": "7001995d48b0008a990390dce0ff61a3"
+    },
+    {
+        "answer_id": 3476935849,
+        "content": "推荐用js这类语言，实现起来稍微容易一些。毕竟你是做demo。在做demo的过程中，就不要再分心到C/C++这些语言的细节上了，不然是很容易放弃的。",
+        "voteup_count": 2,
+        "updated_time": "2024-04-24 13:41:50",
+        "question_id": 653863659,
+        "user_id": "ca053d25ebac0c3dc0513be53b2f4d82"
+    },
+    {
+        "answer_id": 3476266154,
+        "content": "你爱用什么语言实现就用什么语言实现只是别太指望你做的这个东西能够怎么改变你的命运罢了现在主流编译器，尤其是后端就两个，比较多人用的一个是java做的jvm，graal就是java写的后端，目前scala，kotlin，groovy，clojure这些语言用的都是这个后端，还有一堆脚本，比如graal.js，jruby等等还有一个是llvm，苹果主力赞助的，clang就更明显了，clang之所以能做出来，主要就是苹果需要，所以出钱给当时还在uiuc读博士的拉特纳搞搞搞，目前llvm的前端，也就是用llvm这个后端的语言有swift，rust，zig，mojo等等这两个基本上把现在市面上的主流一大半都给概括进去了剩下一个比较出名的语言应该是Google系的，比如dart，go，这些都是Google做的，但是Google呢，没有做一个通用的多语言编译器后端，跟java/graal还有llvm不一样，算是独立发展，但也做了不少这三个基本上涵盖了市面上现在还在用，还算有点人用的大多数语言和工具了用什么写嘛，你爱用什么用什么现在自己整个语言其实并不困难，graal都有手把手教你实现一个simple language的页面https://github.com/graalvm/simplelanguage",
+        "voteup_count": 6,
+        "updated_time": "2024-04-23 22:00:59",
+        "question_id": 653863659,
+        "user_id": "019f06627adc51d9cd030517a6f14c26"
+    },
+    {
+        "answer_id": 3476129107,
+        "content": "用php",
+        "voteup_count": 0,
+        "updated_time": "2024-04-23 19:21:38",
+        "question_id": 653863659,
+        "user_id": "d5e953f59eb6b7c2c8a5e6fe460ee666"
+    },
+    {
+        "answer_id": 3476214339,
+        "content": "选那些有llvm ir binding的语言，这样你就基本不用写后端。那就只有三个选项了：c，c++，ocaml，我推荐 ocaml，三者中唯一支持完整的模式匹配的语言。备注：关于ocaml binding的问题，起码完成一个草稿性质的编译器是没有问题的。毕竟rustc的第一个版本就是ocaml写的。(这同时回答了『有没有人用』的问题)",
+        "voteup_count": 6,
+        "updated_time": "2024-04-26 18:40:42",
+        "question_id": 653863659,
+        "user_id": "f906d7512cfbe88bb4ab485314ba0164"
+    },
+    {
+        "answer_id": 3477783849,
+        "content": "你可以看看我的有个nodejs写的简单版本",
+        "voteup_count": 1,
+        "updated_time": "2024-04-25 09:03:49",
+        "question_id": 653863659,
+        "user_id": "753b869b70437d78ba3b32a22895b157"
+    },
+    {
+        "answer_id": 3477054518,
+        "content": "我感觉应该是从哪个语言 AST 好做的角度整。我记得 ts 那边有现成的 AST 工具，这样的话你先用这个整出来 AST 再看情况用 c 去做比较合适？肯定是不能用 nodejs 生成一个可执行文件的了，没有这种东西",
+        "voteup_count": 1,
+        "updated_time": "2024-04-24 15:24:12",
+        "question_id": 653863659,
+        "user_id": "16af5e94cad61d7263a32460b16151de"
+    },
+    {
+        "answer_id": 3476793805,
+        "content": "如果你只是希望了解以下编译是怎么回事儿，而不想纠结词法分析，语法分析的细节，不考虑性能的话。建议你用node.js，如果非要用类C语言，也最好用C++。达到这个目的，其实用任何一个现代语言都比C合适。为什么呢，因为你会遇到很多字符串处理，动态数据结构处理的问题，如果用C, 可能你调试程序时间都花在和内存做斗争上了。 当然你可以找一个现成的C语言的demo，但就没有什么意义了。 曾经在项目里面用PHP做个一个编译器，当然很简单，基本上就是一个带流程控制、函数调用的公式计算器，而且编译结果也不是机器语言，而是宿主语言PHP。当时很担心PHP的表达能力和性能，以及是否有方便的第三方工具。但是调研的结果是有开源的PHP的语法分析器，那就很方便了，项目很快完成，效果非常好。 现在都还在正常使用。 ",
+        "voteup_count": 1,
+        "updated_time": "2024-04-25 12:44:53",
+        "question_id": 653863659,
+        "user_id": "5010836f3eb6f1572267932c51ac3eaa"
+    },
+    {
+        "answer_id": 3476270301,
+        "content": "一般来讲用你熟悉的。但是如果完全没头绪的话，写一个编译器涉及到的知识广度比较大，可能要学的东西比你从零入门一个编程语言要多。所以我建议你找个靠谱，并且你觉得自己能看懂的教程，用教程推荐的语言来实现。如果能找到 C 或者 NodeJS 的当然最好。",
+        "voteup_count": 1,
+        "updated_time": "2024-04-23 22:05:23",
+        "question_id": 653863659,
+        "user_id": "d3cdb51171e0eec7f80128625b8e3c1b"
+    },
+    {
+        "answer_id": 3478027514,
+        "content": "ocaml",
+        "voteup_count": 0,
+        "updated_time": "2024-04-25 11:47:28",
+        "question_id": 653863659,
+        "user_id": "265dbc4600e74d534809ed0e85d97089"
+    },
+    {
+        "answer_id": 3477004879,
+        "content": "用python吧，毕竟python使用场景比较多",
+        "voteup_count": 0,
+        "updated_time": "2024-04-24 14:43:44",
+        "question_id": 653863659,
+        "user_id": "e02dc5bd856a34bf3651778ada956a21"
+    },
+    {
+        "answer_id": 3476985142,
+        "content": "不会爬先别学跑步建议先练习着写写脚本什么的",
+        "voteup_count": 0,
+        "updated_time": "2024-04-24 14:30:23",
+        "question_id": 653863659,
+        "user_id": "2719440da8b1a64c7fa7e96a3dc2b49a"
+    },
+    {
+        "answer_id": 3478422086,
+        "content": "对于编译器实现，有垃圾回收的语言肯定比没垃圾回收的语言有优势。",
+        "voteup_count": 0,
+        "updated_time": "2024-04-25 17:22:25",
+        "question_id": 653863659,
+        "user_id": "92f18355d18e40d41c366c95d373c65f"
+    }
+]

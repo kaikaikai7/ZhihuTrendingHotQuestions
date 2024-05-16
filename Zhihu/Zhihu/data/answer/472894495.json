@@ -1,0 +1,322 @@
+[
+    {
+        "answer_id": 3479464187,
+        "content": "Rust的所谓内存安全模型，按我理解就是强行要求所有的对象构成一个以单向own关系组成的树形结构，然后无论修改哪个对象，都要求从根开始一级一级mut出来，编译器保证同一个节点同时要么只有一个可写的引用，要么没有可写的引用但可以有任意多个只读的引用，这样就保证了修改对象的时候不会有其他人正在读取。代价就是牺牲了细粒度的并发，比如原本一个树形结构的两个叶子节点是可以同时修改，或者一个在修改另一个在读取的，现在就不行了，这是允许编译器进行上述检查所必须的。那么链表如果按照链表头依次own后面的节点来理解，修改某个节点就必须从链表头开始把所有前面的节点全都mut引用出来，这显然是不能接受的，完全失去了链表的存在意义。使用所谓Arena进行变通，用下标来代替引用，所有链表节点存在一个池子里面，这样把链表的own关系改成链表对象own所有节点，固然是可以编译通过也可以用，但实质上那个下标就相当于裸指针，里面的数值是否正确是完全没有保证的，释放节点也相当于是纯手动，这基本上就是纯C实现时候的情况，顶多是如果搞错了只会panic不会出现非法操作引起安全漏洞，你说safe了吗，如safe……我是并不赞同这种模式的，这顶多算是变通。",
+        "voteup_count": 150,
+        "updated_time": "2024-04-26 15:31:30",
+        "question_id": 472894495,
+        "user_id": "60cd9664ef2f13d8d5ddba060ef35a8a"
+    },
+    {
+        "answer_id": 2008871324,
+        "content": "Rust写个使用unsafe的链表还是蛮简单的，跟C++难度差不多。链表这个东西天生就跟Rust的借用规则冲突，一个链表节点在操作的时候同时被多个指针拥有和修改是很常见的事，更别说双向链表这种自带循环引用的数据结构了。如果不使用unsafe和指针，会有很多不必要的开销，而且也很难写。所以目前标准库自己都是unsafe实现的，链表确实是Rust借用规则的痛点，不过使用unsafe也不是什么丢人的事，况且链表作为一个容器还蛮好保证安全性的，使用unsafe不是什么大问题。所以不要被一个链表就劝退了，因为在Rust写一个safe链表确实难，属于进阶知识了，不要觉得写一个safe链表是一件简单的事，入门就直接踢硬石头没有必要。",
+        "voteup_count": 85,
+        "updated_time": "2021-07-20 12:04:11",
+        "question_id": 472894495,
+        "user_id": "99ce070a53b7f46508705d0607121efc"
+    },
+    {
+        "answer_id": 2591625605,
+        "content": "我：「听说 Rust 写不出链表？」某同事：「你在任何时候都不应该再用链表！」",
+        "voteup_count": 124,
+        "updated_time": "2022-07-25 13:24:18",
+        "question_id": 472894495,
+        "user_id": "b6d28ac2b88b7f230552bab4a0aceaca"
+    },
+    {
+        "answer_id": 3102062356,
+        "content": "rust 试图解决一个叫分布式所有权的学术问题, 当所有权在系统中以兄弟节点传递时, 怎么进行创建、插入和删除工作?既然是个学术级别的问题那显然是非常有难度的. 至于解决了这个有什么意义, emmmmm.据我所知现实中没有任何鸟用. 非但解决这个问题没鸟用, 解决完这一个还有一大串更难的, 比如说:既然所有权可以来源于兄弟节点, 那是不是可以来源于父子节点, 当所有权以树状传递, 这该怎么办? 更进一步, 若所有权以图状交织传递, 这时又该怎么办?估计可能量子计算里会有用, 因为每一个线性依赖类型可以对应一个量子比特系统, 量子比特的某些性质和所有权相似.社区其实也不关心什么双向链表, 去中心化不行那就中心化呗, 实际用的更多的是 ArenaList 结构.pub struct ArenaList<T> {\n    nodes: Vec<NodeInfo<T>>,\n    first_free: usize,\n    len: usize,\n}\n\nstruct NodeInfo<T> {\n    data: Option<T>,\n    next_sibling: Option<usize>,\n    prev_sibling: Option<usize>,\n}\n\npub struct Node<'a, T> {\n    id: usize,\n    owner: &'a ArenaList<T>,\n}\nArena 节点不用释放, 置 None 就当他删了, 同时更新 first free id, 删除常数复杂度first_free 不空时后续地址可以复用, 不用额外 allocate, 相当于对象池了.这里也可以存 free_nodes, 用空间换更低的插入时间.空洞太多手动执行 Sort and Compact, 缓存非常友好.最后生命周期结束集体释放, 总体性能更好.有这么好用的玩意儿谁还惦记你那 Cache 稀巴烂的双向链表啊?",
+        "voteup_count": 355,
+        "updated_time": "2023-07-03 20:40:29",
+        "question_id": 472894495,
+        "user_id": "a74574db96f2d0e717fc410bf90dd150"
+    },
+    {
+        "answer_id": 2004989569,
+        "content": "《too many lists》手把手教你用rust实现各种链表的book。链表难很正常，因为它把rust的主要知识都涉及到了。rust的知识点非常多，看完教程不会写代码太正常了。因为很多琐碎小知识并没有在其中讲述。rust的编程范式与主流编程语言不大相同，需要花很多时间去熟悉。如果没学过c++，haskell，ocaml之类的语言。肯定会觉得这是外星文明。传统内存管理要不是gc自动管理，要不是手动回收。rust两者都不是，既没有gc，又不要手动管理。再加上内存安全的需求。所有权系统对你一定是新鲜又陌生的。学rust免不了天天谷歌，啃英文book。中文互联网的内容还不足以支撑没有相关基础的人一条龙速成。不用指望rust能给你带来任何的财富收益，抱着玩玩的心态学就是了。rust的设计是非常优秀的，回过头去写其他语言，会感慨真不是同一时代的产物。",
+        "voteup_count": 96,
+        "updated_time": "2021-07-18 11:29:05",
+        "question_id": 472894495,
+        "user_id": "ff651f7c787efa89decc3d5c68697cc2"
+    },
+    {
+        "answer_id": 3479999606,
+        "content": "其实也不难。你以为我又要教你unsafe？才不是。首先搞个节点struct，该放指针的地方别放指针，放个usize，再搞个大数组把节点都放里面，然后维护两条链，一条free一条busy，调整关系就折腾下标，放不下了就扩大数组，搞定收工。你也别说这玩意儿不是链表，毕竟插入时amortized O(1)也是O(1)。反正我不用unsafe它就是safe的，就算写出bug它也是safe的，你说对吧（此处有一个坚毅的表情）",
+        "voteup_count": 35,
+        "updated_time": "2024-04-27 02:06:09",
+        "question_id": 472894495,
+        "user_id": "630612ff80641e9ec165af192743a792"
+    },
+    {
+        "answer_id": 3476969995,
+        "content": "@酱紫君 的 回答 给出了很好的正面解释，我再来补充点有趣的小知识，希望能让你明白“为什么 Rust 链表编写体验存在问题，却没人试图从语言设计方面优化这个体验”（并不是小众场景就一定不会被优化，Rust 不断增加的语言特性实际上优化了很多小众场景）：如果学过信息论，有个关于压缩算法的经典思考就是：对于任何无损压缩算法，都能构造出特定的原始数据，使得经过压缩算法压缩过后的数据反而占用了更多空间，这一点是由抽屉原理决定的。考虑到可执行程序的语义必须是精确的，不同的高级编程语言，实际上就是对于等效的机器指令/汇编代码的不同压缩编码方案。那么同样的道理，一门编程语言的语法设计，对于大多数“常用模式”优化使用体验（相对于其它编程语言），最终必须有一类作为牺牲品的“不常用模式”体验反而比其它语言更差了。而对于 Rust 来说，原教旨链表[1]的开发体验就是这类牺牲品之一。正好比机械工程师不会试图违反能量守恒定律，热力工程师不会试图违反热力学第二定律；设计编程语言的软件工程师也不会试图违背上面提到的这种规律。链表的开发体验糟糕，是因为必须有一类牺牲品存在。那么工程实践中选择把一个“很多人都知道本来就不适应于时代的设计”的开发体验当做牺牲品，就没有理由再问“为什么不能你好我好大家好”，因为这违反了信息编码设计的基本规律。（顺便一提，就算是在 Rust，当你确定需要用链表时，也是有现成的轮子可以用的。使用 Rust 链表 比 实现 Rust 链表自然会简单很多。只不过某些语言可以很容易用基本的类型定义直接创建链表，而 Rust 会需要使用库 API 并且还会受到 lifetime 限制，这种情况对某些人来说不习惯罢了）补充我发现很多人学一门新语言就要拿“从零实现各种数据结构”作为练习题，这跟“除了增删改查啥也不管”的调包侠走了一个反面的极端——认为「完整掌握造各种轮子的全流程」才能体现水平的轮子侠。对 Rust 来说，语言允许你达到 C/C++ 同等的性能水平，固然是一大优点，但我觉得 Rust 更大的优点在于它对于 API 签名的表现力和约束力（C++ 模板元编程表现力更自由，约束力较弱，导致多模块的整合更加痛苦）。学 Rust 应该多学习各种优秀的库是如何设计 API 使得库与库之间可以有效合作的，而不是像传统科班生那样专注于算法，孤立地实现一个功能，把“实现”本身当做重点[2]。事实上，如果你能创造一个优秀的架构设计，那么会有很多大牛愿意来围绕这个架构丰满具体实现。但如果你只能创造小而美的实现，你的实现和别人的实现整合不到一块去，那在工程上又有多大用呢？",
+        "voteup_count": 55,
+        "updated_time": "2024-04-24 23:50:31",
+        "question_id": 472894495,
+        "user_id": "fa28f6bced6405f67e31237398320a07"
+    },
+    {
+        "answer_id": 2696492927,
+        "content": "写过bwtree，art，skiplist 等生产级别的数据结构，我感觉需要一些适量的 unsafe code，别傻傻的用 Rc 那一坨东西，用unsafe code 把内存布局设计好了，后面大部分都是 safe code 了，甚至那部分unsafe code 在rust 中可能已经是 safe 接口了。另外rust不适合练习数据结构…",
+        "voteup_count": 45,
+        "updated_time": "2022-09-30 19:41:42",
+        "question_id": 472894495,
+        "user_id": "9e13c9053f39a633b58f6468b87960ad"
+    },
+    {
+        "answer_id": 3106147264,
+        "content": "那有多难啊？首先你要回Rust语言吧，其次，你要了解链表的定义！链表由一系列结点（链表中每一个元素称为结点）组成，结点可以在运行时动态生成。每个结点包括两个部分：一个是存储数据元素的数据域，另一个是存储下一个结点地址的指针域，相比于线性表顺序结构，操作复杂!链表的定义链表是物理存储单元上非连续的、非顺序的存储结构，它是由一个个结点，通过指针来联系起来的，其中每个结点包括数据和指针。数据元素的逻辑顺序是通过链表中的指针链接次序实现的。链表的非连续，非顺序，对应数组的连续，顺序，我们来看看整型数组 1，2，3，4 在内存中是如何表示的双链表单链表中的节点只能指向节点的下一个节点。双链表：每一个节点有两个指针域，一个指向下一个节点，一个指向上一个节点。双链表 既可以向前查询也可以向后查询。特点：1、采用动态存储分配，不会造成内存浪费和溢出；2、链表执行插入和删除操作十分方便，修改指针即可，不需要移动大量元素。个人感觉和java差不多的，接下来，我用法rust写一个我们都知道List后者是linkList的一个node节点，我们可以来进行比葫芦画瓢就行了！定义节点结构体：struct Node<T> {\n    value: T,\n    next: Option<Box<Node<T>>>,\n}\n实现链表结构体：struct LinkedList<T> {\n    head: Option<Box<Node<T>>>,\n}\n实现链表的基本操作：现在你可以开始实现链表的基本操作，例如插入节点、删除节点和遍历链表等。impl<T> LinkedList<T> {\n    // 在链表头部插入节点\n    fn push(&mut self, value: T) {\n        let new_node = Box::new(Node {\n            value: value,\n            next: self.head.take(),\n        });\n        self.head = Some(new_node);\n    }\n\n    // 删除链表头部的节点\n    fn pop(&mut self) -> Option<T> {\n        self.head.take().map(|node| {\n            self.head = node.next;\n            node.value\n        })\n    }\n\n    // 遍历链表并打印节点的值\n    fn print(&self) {\n        let mut current = &self.head;\n        while let Some(node) = current {\n            println!(\"{}\", node.value);\n            current = &node.next;\n        }\n    }\n}\n最后我们可以用进行测试，在java中写一个main方法，rust也大同小异，只是语法不同罢了fn main() {\n    let mut list = LinkedList::<i32> { head: None };\n    list.push(1);\n    list.push(2);\n    list.push(3);\n    list.print();\n    list.pop();\n    list.print();\n}\n运行的结果：3\n2\n1\n2\n1\nrust本身也并非十全十美，譬如说所有权、生命周期等等这些在Rust独有的概念，我在理解过程当中花费了大量的精力和时间。如果作为初学者，可能不是一个好的选择~但是如果想学习Rust，可以静下心来学习一个书籍就行了《Rust实例教程》（Rust by example）它是另一本很棒的官方书籍。该教程结构上像一本书，但更像是个备忘录。它分为小章节和子章节。每部分，可以在5分钟内完成阅读和学习，以了解基本的Rust概念。可以将其当做一本参考资料，并且在难以记住某些特定细节（例如如何编写单元测试或的确切语法是什么）时可以随时查阅。Rust语言官网https://www.rust-lang.org/总之，学好Rust，以后总会用得到的！",
+        "voteup_count": 9,
+        "updated_time": "2023-07-06 18:23:49",
+        "question_id": 472894495,
+        "user_id": "0562ae57ba411b146099313075609e94"
+    },
+    {
+        "answer_id": 2207257061,
+        "content": "unsafe 也是rust的一部分，为什么不受待见呢？该用就用，不滥用即可",
+        "voteup_count": 41,
+        "updated_time": "2021-11-05 09:30:44",
+        "question_id": 472894495,
+        "user_id": "f5f75631f7aa6c912734a64fd7540d3e"
+    },
+    {
+        "answer_id": 2580891984,
+        "content": "我怀疑喷子有没有认真了解一下rust语言？都陷入c++/java的编程模式思维了吧？链表rust官方有例子啊，官网上就有，短短就这么几行，用强大的枚举来实现。另外说一嘴，移植代码时，凡是有套娃属性的算法和数据结构，用全safe rust实现都很麻烦，果断使用unsafe吧。不要陷入一个误区，其实我觉得rust新手应该unsafe和safe一起学。如果不用unsafe，摒弃从c++/java带来的思维惯性，用rust的强大工具枚举来实现也非常地优雅，看一下rust官方的链表例子，非常优美简洁。rust的枚举非常强大。use List::*;\n\nenum List {\n    // Cons：元组结构体，包含链表的一个元素和一个指向下一节点的指针\n    Cons(u32, Box<List>),\n    // Nil：末结点，表明链表结束\n    Nil,\n}\n\n// 可以为 enum 定义方法\nimpl List {\n    // 创建一个空的 List 实例\n    fn new() -> List {\n        // `Nil` 为 `List` 类型（译注：因 `Nil` 的完整名称是 `List::Nil`）\n        Nil\n    }\n\n    // 处理一个 List，在其头部插入新元素，并返回该 List\n    fn prepend(self, elem: u32) -> List {\n        // `Cons` 同样为 List 类型\n        Cons(elem, Box::new(self))\n    }\n\n    // 返回 List 的长度\n    fn len(&self) -> u32 {\n        // 必须对 `self` 进行匹配（match），因为这个方法的行为取决于 `self` 的\n        // 取值种类。\n        // `self` 为 `&List` 类型，`*self` 为 `List` 类型，匹配一个具体的 `T`\n        // 类型要好过匹配引用 `&T`。\n        match *self {\n            // 不能得到 tail 的所有权，因为 `self` 是借用的；\n            // 因此使用一个对 tail 的引用\n            Cons(_, ref tail) => 1 + tail.len(),\n            // （递归的）基准情形（base case）：一个长度为 0 的空列表\n            Nil => 0\n        }\n    }\n\n    // 返回列表的字符串表示（该字符串是堆分配的）\n    fn stringify(&self) -> String {\n        match *self {\n            Cons(head, ref tail) => {\n                // `format!` 和 `print!` 类似，但返回的是一个堆分配的字符串，\n                // 而不是打印结果到控制台上\n                format!(\"{}, {}\", head, tail.stringify())\n            },\n            Nil => {\n                format!(\"Nil\")\n            },\n        }\n    }\n}\n\nfn main() {\n    // 创建一个空链表\n    let mut list = List::new();\n\n    // 追加一些元素\n    list = list.prepend(1);\n    list = list.prepend(2);\n    list = list.prepend(3);\n\n    // 显示链表的最后状态\n    println!(\"linked list has length: {}\", list.len());\n    println!(\"{}\", list.stringify());\n}\n测试实例：链表 - 通过例子学 Rust 中文版",
+        "voteup_count": 115,
+        "updated_time": "2022-08-22 10:15:24",
+        "question_id": 472894495,
+        "user_id": "d0406b7444a292161e2ddde5ebfd9d96"
+    },
+    {
+        "answer_id": 2847271760,
+        "content": " #[derive(PartialEq, Eq, Clone, Debug)]\n pub struct ListNode {\n   pub val: i32,\n   pub next: Option<Box<ListNode>>\n }\n \n impl ListNode {\n   #[inline]\n   fn new(val: i32) -> Self {\n     ListNode {\n       next: None,\n       val\n     }\n   }\n }\n没有那么夸张吧，代码数量绝对比最简单的c语言还要少。",
+        "voteup_count": 10,
+        "updated_time": "2023-01-16 05:54:43",
+        "question_id": 472894495,
+        "user_id": "fbb30fd9d460586bb591719e2eaddd99"
+    },
+    {
+        "answer_id": 2699969156,
+        "content": "如果学数据结构，请用C++;如果学Rust 请看官方例程(而且英语要好，不要相信国内二手错误资料)。Rust的设计者认为99.99%的程序员的能力hold不住底层，所以才这么设计（限制使用裸指针）。rust有个unsafe。unsafe的意思就是非千足程序员不要碰，没有深厚的经验和积累 使用裸指针非常容易引发bug。对于实战派而言，链表是一个很不常用的数据结构，链表最常见的是面试题，看一下应聘者的基础能力。如果想进一步考察应聘者的能力，自然是问 链表有什么缺点，和Tree 比性能有什么不同。Tree 的搜索、插入、删除都是 O( log N）的。链表  的搜索 是要遍历整个链表， 也就是O(N) ，性能很差，链表 的插入、删除 最快是O(1），只有很少的情况下，链表会有性能优势，大部分情况下性能劣势。如果想证明一个技术牛B，扯上linux内核就是最好的背书，反正linux内核源码 没几个人真正看过。网上公开搜到的数据是这样的只看 2019 年，Linux 内核有 74754 次 commit，这是 2013 年以来的最低值。2017 年和 2018 年的 commit 次数都有 8 万次，2016 年为 77 000 次，2014 年和 2015 年都有 75 000 次。除了 commit 数量少，去年的内核作者数量也降低了，2019 年大约有 4 189 位不同的 Linux 内核作者，这低于 2018 年的 4 362 位和 2017 年的 4 402 位。所以接触底层的程序员其实很少。",
+        "voteup_count": 48,
+        "updated_time": "2023-03-14 17:57:50",
+        "question_id": 472894495,
+        "user_id": "a824ebca95bdfd4bbae59aa00e0075f3"
+    },
+    {
+        "answer_id": 2728211271,
+        "content": "此处无unsafe和黑魔法，所谓需要unsafe只不过是为了减少那一点微乎其微的性能开销罢了。单向链表在rust里不会违法所有权规则就太简单了，这里写的是双向的，这里只实现了一个插入方法，不过作为例子足够了。Rust PlaygroundEDIT：之前的版本有的知友说我没写Drop，当时我是抱着简洁起见所以没写Drop，不过后来想一想没有drop确实是不正确的写法，现在这个版本是添加了Drop的#![allow(unused)]\nuse std::{cell::RefCell, fmt::Display, rc::Rc};\n\ntype NodeHandle<T> = RefCell<Option<Rc<Node<T>>>>;\n\nstruct LinkedList<T> {\n    head: NodeHandle<T>,\n}\n\nstruct Node<T> {\n    data: RefCell<T>,\n    prev: NodeHandle<T>,\n    next: NodeHandle<T>,\n}\n\nimpl<T> LinkedList<T> {\n    // 创建空表\n    fn new() -> Self {\n        LinkedList {\n            head: RefCell::new(None),\n        }\n    }\n\n    // 在index处插入元素\n    fn insert(&self, index: usize, data: T) -> Rc<Node<T>> {\n        let mut prev = None;\n        let mut this = self.head.clone().into_inner();\n\n        // 找到下标为index的元素(允许为None)\n        for _ in 0..index {\n            prev = this;\n            this = prev\n                .as_ref()\n                .expect(\"Out of range\")\n                .next\n                .clone()\n                .into_inner();\n        }\n\n        // 创建\n        let new = Rc::new(Node {\n            data: RefCell::new(data),\n            prev: RefCell::new(prev.clone()),\n            next: RefCell::new(this.clone()),\n        });\n\n        // 设置前一个节点的下一个节点为自己\n        *(match &prev {\n            Some(p) => &p.next,\n            None => &self.head,\n        })\n        .borrow_mut() = Some(new.clone());\n\n        // 设置后一个节点的前一个节点为自己\n        if let Some(next) = this {\n            *next.prev.borrow_mut() = Some(new.clone());\n        }\n\n        new\n    }\n\n    // 当数据可显示时打印\n    fn print(&self)\n    where\n        T: Display,\n    {\n        let mut this: Option<Rc<Node<T>>> = self.head.clone().into_inner();\n\n        print!(\"head\");\n        while let Some(rc) = this.as_ref() {\n            let rc = rc.clone();\n            print!(\" -> {}\", rc.data.borrow());\n            this = rc.next.borrow().clone();\n        }\n\n        print!(\"\\n\");\n    }\n}\n\nimpl<T> Drop for LinkedList<T> {\n    fn drop(&mut self) {\n        let mut next = self.head.take();\n        while let Some(this) = next {\n            this.prev.take();\n            next = this.next.take();\n        }\n    }\n}\n\nfn main() {\n    let mut a = LinkedList::new();\n    a.insert(0, 2); // head -> 2\n    a.insert(0, 1); // head -> 1 -> 2\n    a.insert(2, 4); // head -> 1 -> 2 -> 4\n    a.insert(2, 3); // head -> 1 -> 2 -> 3 -> 4\n    a.insert(4, 5); // head -> 1 -> 2 -> 3 -> 4 -> 5\n    a.print();\n}\n",
+        "voteup_count": 20,
+        "updated_time": "2022-10-25 08:55:50",
+        "question_id": 472894495,
+        "user_id": "ad772b6e443f54e1e30530fd2a8b7cf9"
+    },
+    {
+        "answer_id": 3480104392,
+        "content": "引用数据结构在 safe rust 里是个天坑。真要搓这种数据结构最好直接上 unsafe，比对付 safe rust 快得多也爽的多。这也是标准库的思路。但在标准库帮你搓好了的情况下，其实真没必要自己去搓这些东西。",
+        "voteup_count": 10,
+        "updated_time": "2024-04-27 08:30:51",
+        "question_id": 472894495,
+        "user_id": "6a067721ac93860894b7a8088c172c52"
+    },
+    {
+        "answer_id": 2671087419,
+        "content": "刷 leetcode 链表题的时候感觉自己是个傻逼，简直寸步难行，加一行代码几行代码标红。",
+        "voteup_count": 10,
+        "updated_time": "2022-09-13 03:11:47",
+        "question_id": 472894495,
+        "user_id": "0"
+    },
+    {
+        "answer_id": 2692726906,
+        "content": "节点的结构希望链表存储在堆上，所以使用 Box 包裹节点 Rust 没有空值，所以用 Option 在包裹一层#[derive(PartialEq, Eq, Clone, Debug)]\nstruct ListNode<T> {\n    pub data: T,\n    pub next: Option<Box<ListNode<T>>>,\n}\n根据索引查找节点和找尾节点是通过递归来查找的impl<T> ListNode<T> {\n    // 新建一个节点\n    #[inline]\n    fn new(data: T) -> ListNode<T> {\n        ListNode { next: None, data }\n    }\n    // 获取最后的节点\n    fn get_last_node<'a>(&'a mut self) -> &'a mut Self {\n        if let Some(ref mut node) = self.next {\n            return node.get_last_node();\n        }\n        self\n    }\n    // 根据索引查找节点\n    fn get_index_node<'a>(&'a mut self, cur: usize, index: usize) -> &'a mut Self {\n        if cur >= index {\n            return self;\n        }\n        if let Some(ref mut node) = self.next {\n            return node.get_index_node(cur + 1, index);\n        }\n        self\n    }\n}\n链表的结构#[derive(PartialEq, Eq, Clone, Debug)]\nstruct List<T> {\n    pub head: Option<Box<ListNode<T>>>,\n    pub length: usize,\n}\n链表插入链表的插入先判断头结点是否为空。如果插入的是头结点的话，需要将新的节点的下个节点设置为头结点，再将新结点设置为头节点。插入的是其他的位置的话，先找到索引的前一个节点，将前一个节点的下个节点设置为新节点，将新节点的下个节点设置为前节点的下个节点。// 插入\nfn insert(&mut self, index: usize, data: T) {\n    let mut new_node = ListNode::new(data);\n    if let Some(ref mut head) = self.head {\n        if index == 0 {\n            let head = self.head.take();\n            new_node.next = head;\n            self.head = Some(Box::new(new_node));\n        } else {\n            let mut prev_node = head.get_index_node(0, index - 1);\n            let next_node = prev_node.next.take();\n            new_node.next = next_node;\n            prev_node.next = Some(Box::new(new_node));\n        }\n    } else {\n        self.head = Some(Box::new(new_node));\n    }\n    self.length += 1\n}\n链表删除// 删除\n    fn delete(&mut self, index: usize) {\n        if let Some(ref mut head) = self.head {\n            self.length -= 1;\n            if index == 0 {\n                self.head = head.next.take();\n            } else if index >= self.length {\n                let prev_node = head.get_index_node(0, self.length - 1);\n                prev_node.next.take();\n            } else {\n                let mut prev_node = head.get_index_node(0, index - 1);\n                let mut next_node = prev_node.next.take();\n                prev_node.next = next_node.as_mut().unwrap().next.take();\n            }\n        }\n    }\n链表的修改和查询  // 修改\n    fn change(&mut self, mut index: usize, data: T) {\n        if let Some(ref mut head) = self.head {\n            if index >= self.length {\n                index = self.length;\n            }\n            let mut node = head.get_index_node(0, index);\n            node.data = data;\n        }\n    }\n    //  查询\n    fn search(&mut self, index: usize) -> Option<T> {\n        if let Some(ref mut head) = self.head {\n            if index >= self.length {\n                return None;\n            }\n            let node = head.get_index_node(0, index);\n            let data = node.data;\n            return Some(data);\n        } else {\n            return None;\n        }\n    }\n链表打印impl<T> Display for List<T>\nwhere\n    T: Debug,\n{\n    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {\n        if let Some(head) = &self.head {\n            let mut head = Some(head);\n            while let Some(node) = head {\n                write!(f, \"{:?} => \", node.data).unwrap();\n                head = node.next.as_ref();\n            }\n        }\n        write!(f, \"None\")\n    }\n}\n代码地址",
+        "voteup_count": 14,
+        "updated_time": "2022-09-28 09:14:38",
+        "question_id": 472894495,
+        "user_id": "5d615d3cfd8e2f61b721552d4188200d"
+    },
+    {
+        "answer_id": 2847344164,
+        "content": "其他语言写个足够安全的链表难道很简单？据我所知，其他语言写个链表，还得用额外的说明文档告诉你这个链表是不是多线程安全的。",
+        "voteup_count": 9,
+        "updated_time": "2023-01-16 08:39:10",
+        "question_id": 472894495,
+        "user_id": "54a9cb6f2dc08ef85ed907ef9e0d2346"
+    },
+    {
+        "answer_id": 3479743015,
+        "content": "因为Rust的类型系统无法表达链表。我们在链表上删除node时需要释放node的资源，这是所有权的表达，所以借用系统并不适用。即使想用借用去表达无所有权的不可变链表结构，你会发现需要存在类型才能表达prev和next的类型，而Rust目前并没有显式支持存在类型。即便是目前可以写的单链表，也是通过Box这种unsafe实现来完成的。Box只能表达唯一的所有权，但是双链表上的node的所有权是被前后的node同时拥有的。根源上来说系统级编程语言做到类型安全需要类型系统能表达内存可达性，当证明一块通过allocator分配的内存仅通过一个指针可达时，我们就可以消耗掉这个指针释放它。这是一个编译期的GC系统。对链表这个数据结构来说这可能不是不可能的，但是类型系统需要能表达的东西太多了。比如需要让编译器知道head和tail可以trace同一系列内存区域，且这些内存区域前后互相指向。编译器需要能阻止你通过某个node的mut引用获得一个已经获取过的node的mut引用（可以理解为在可达性图上以获取可变引用游历的情况下不可出现环）。否则当你释放掉这个node的话就会导致无效引用的出现。即便这样的类型系统能设计出来，使用它的难度可能也太大了。",
+        "voteup_count": 6,
+        "updated_time": "2024-04-26 19:57:23",
+        "question_id": 472894495,
+        "user_id": "8c2feb006906a2e1fb97f175de6819d2"
+    },
+    {
+        "answer_id": 3119469603,
+        "content": "rust 写无环的数据结构还是比较容易的，写有环的一般都要上 unsafe",
+        "voteup_count": 5,
+        "updated_time": "2023-07-15 08:55:24",
+        "question_id": 472894495,
+        "user_id": "d1550eadb2986671a9ffb97c6d9db7e8"
+    },
+    {
+        "answer_id": 2809601605,
+        "content": "嘿嘿 我建议写一个链表的plus升级版--跳表 那才是真正的折磨...",
+        "voteup_count": 8,
+        "updated_time": "2022-12-20 22:38:06",
+        "question_id": 472894495,
+        "user_id": "243cb7dd03beafcead612ba522457723"
+    },
+    {
+        "answer_id": 2696137543,
+        "content": "使用unsafe吧，too many list的链表实现其实也不好，不如用unsafe手撸，反正refcell这种底层不也是unsafe实现的。",
+        "voteup_count": 6,
+        "updated_time": "2022-09-30 14:56:25",
+        "question_id": 472894495,
+        "user_id": "ba9ca0e4fb63fd4b9dd9400a73d9eeef"
+    },
+    {
+        "answer_id": 2005536677,
+        "content": "写链表想safe的话关键点是用好mem::take。一般实现链表就unsafe就行了，标准库里就是这么搞的。",
+        "voteup_count": 6,
+        "updated_time": "2021-07-18 17:08:24",
+        "question_id": 472894495,
+        "user_id": "fdf45ee25c474b0a152a67ee2fa53b9f"
+    },
+    {
+        "answer_id": 2004971260,
+        "content": "写链表有专门的教程，名叫Learning Rust with Too Many Linked Lists。你现在的水平还不到能写出链表的。其实Rust写出不安全的链表很简单，但是写出安全的就要难了。",
+        "voteup_count": 7,
+        "updated_time": "2021-07-18 11:16:24",
+        "question_id": 472894495,
+        "user_id": "c38c85ec33aa0d6f9cb63fb0ab58d970"
+    },
+    {
+        "answer_id": 3119714346,
+        "content": "遇到环形/链形数据结构要么存索引，要么出门左转unsafe。unsafe又不是洪水猛兽，为什么不能用。",
+        "voteup_count": 4,
+        "updated_time": "2023-07-15 12:02:07",
+        "question_id": 472894495,
+        "user_id": "9d5f552b009a49ba35db80a80ac9624c"
+    },
+    {
+        "answer_id": 2005021882,
+        "content": "正确理解“rust无法实现链表” - 知乎 (zhihu.com)",
+        "voteup_count": 5,
+        "updated_time": "2021-07-18 11:48:05",
+        "question_id": 472894495,
+        "user_id": "c29df18d33607a5ab02bd43562a9b033"
+    },
+    {
+        "answer_id": 3478138543,
+        "content": "我没看过那些实现高效链表的高级方法，但我自己实现的话不就是Rc<RefCell<>>一把梭吗？什么双向链表、树、图都不在话下。害怕泄漏就一个管理struct存Rc，结点存Weak不就完了？不清楚说的难度在哪？",
+        "voteup_count": 4,
+        "updated_time": "2024-04-25 13:31:12",
+        "question_id": 472894495,
+        "user_id": "b6e229c2826fd6424e6c2cffe9bb8bf6"
+    },
+    {
+        "answer_id": 3047379078,
+        "content": "不难，就是有点废键盘（其实还是很难的，因为想用safe rust写出链表你可能需要了解所有权、RefCell、Rc、Weak、Option... 甚至还有像std::mem::replace和std::men::take这样比较hack的内存小技巧我试着写了一个比较丑的双向链表，但是能编译通过：）https://www.zhihu.com/question/54265676/answer/3042018034",
+        "voteup_count": 2,
+        "updated_time": "2023-05-27 21:56:00",
+        "question_id": 472894495,
+        "user_id": "995def7d443ef1f4ba55a14d38c118a1"
+    },
+    {
+        "answer_id": 3481499683,
+        "content": "因为Rust一天写100行话，写Go能写300行。Rust语法严谨，注重细节，编写Rust代码的程序员真的需要花费更多的时间来确保代码的准确性和安全性，一天内写100行Rust代码，那肯定是深思熟虑、精心编写的代码，数量少，质量高，避免潜在的错误和安全漏洞。Go语言（Golang）也是简单粗暴易用，清晰、简洁的代码，没有Rust那么多复杂的概念和特性，写Go速度是Rust的三倍，达到300行，在复杂性和安全性上不如Rust那么严格，可读性和可维护性通常会很好，适合快速开发和部署服务。Rust适合需要高性能、内存安全和低级控制的系统级编程，浏览器引擎、操作系统组件或安全敏感的应用。Go更适合构建分布式系统、网络服务和微服务，高效的并发模型和简洁的工具链使得开发和部署过程更为流畅。代码行数并不能完全衡量编程效率，更重要的是代码的质量、可读性、可维护性和实际运行效果。",
+        "voteup_count": 2,
+        "updated_time": "2024-04-28 14:29:16",
+        "question_id": 472894495,
+        "user_id": "fa42fc0079322125182f6a6789ee3c2f"
+    },
+    {
+        "answer_id": 3480883279,
+        "content": "主要是因为 Rust 的所有权系统和借用检查器（borrow checker）带来的复杂性",
+        "voteup_count": 1,
+        "updated_time": "2024-04-27 23:35:38",
+        "question_id": 472894495,
+        "user_id": "cdb6be21942c85149f4c2a13196460e4"
+    },
+    {
+        "answer_id": 3480806926,
+        "content": "这个问题是刷leetcode的朋友问的么 ",
+        "voteup_count": 1,
+        "updated_time": "2024-04-27 22:08:34",
+        "question_id": 472894495,
+        "user_id": "16d0cb25df98c0c909e60b135a5800c5"
+    },
+    {
+        "answer_id": 3119210068,
+        "content": "你要不看看rust文档？基本开始就会跟你说不推荐你去自己实现这些东西……",
+        "voteup_count": 1,
+        "updated_time": "2023-07-14 23:28:04",
+        "question_id": 472894495,
+        "user_id": "184c6fe790b37b5fc43c3a8621ed7dac"
+    },
+    {
+        "answer_id": 2847219113,
+        "content": "safe的目的是缩小unsafe代码的范围。只要unsafe区足够小，代码就越可控。区区一个链表，既不复杂代码也不多，还是基础容器，写个unsafe代码让你如失考妣？",
+        "voteup_count": 18,
+        "updated_time": "2023-01-16 02:25:32",
+        "question_id": 472894495,
+        "user_id": "0"
+    },
+    {
+        "answer_id": 3480373360,
+        "content": "当使用Rust编写链表时，会面临一些挑战和复杂性，主要包括以下几个方面：1. 内存管理和所有权：Rust的所有权系统要求在编译时就要保证内存安全，这意味着在链表中需要手动管理内存的分配和释放。在创建节点、插入或删除节点时，需要考虑如何正确地处理内存的所有权，避免出现悬垂指针或内存泄漏等问题。此外，Rust还要求对借用和生命周期有清晰的理解，因此需要仔细考虑如何在链表中正确地使用引用和借用。2. 类型系统和泛型：Rust的类型系统非常严格，要求在编译时就要保证类型的正确性。在链表中涉及到泛型类型和递归类型，这可能会导致一些复杂的类型操作和编译器的报错。需要仔细考虑如何定义节点和链表的类型，以及如何正确地处理泛型参数和递归类型的定义。3. 并发和多线程：Rust支持并发和多线程编程，但这也增加了编写链表的复杂性。在多线程环境下，需要考虑如何正确地共享和访问链表的数据，避免出现数据竞争和并发安全性问题。需要使用Rust提供的并发原语和类型来保证链表在多线程环境下的安全性。总的来说，Rust编写链表的复杂性主要源于其严格的内存管理、所有权系统、类型系统以及并发编程的要求。需要程序员对这些概念有深入的理解和掌握，才能够正确地编写高效、安全的链表代码。",
+        "voteup_count": 1,
+        "updated_time": "2024-04-27 13:18:06",
+        "question_id": 472894495,
+        "user_id": "d961ff683c96632b69f1ca3e7af97456"
+    },
+    {
+        "answer_id": 3480097027,
+        "content": "Rust的严格所有权和生命周期模型确实为内存管理提供了极高的安全性，但这也为开发者带来了更高的学习曲线。相较于Java、Python等具有垃圾回收机制的语言，Rust需要开发者更精细地控制数据的引用和生命周期，这在一定程度上增加了编程的复杂性。然而，正是这种复杂性帮助Rust保证了内存安全和并发性能，使其在系统级编程中具有显著优势。对于熟悉GC语言的开发者来说，掌握Rust可能需要一些时间和实践，但一旦掌握，将能编写出既高效又安全的代码。",
+        "voteup_count": 0,
+        "updated_time": "2024-04-27 08:20:41",
+        "question_id": 472894495,
+        "user_id": "b51d2fc9ae244265768d488ae457ccb3"
+    },
+    {
+        "answer_id": 3107436076,
+        "content": "接触的都是带GC的语言那就很正常了。如果你接触的是c/c++还搞不定的话，那就得怀疑一下自己的能力了，哈哈。",
+        "voteup_count": 0,
+        "updated_time": "2023-07-07 10:31:21",
+        "question_id": 472894495,
+        "user_id": "f065c1aa69fd49a8342fefcc96e8b4cc"
+    },
+    {
+        "answer_id": 2928922650,
+        "content": "可以看我的专题 有我自己学习的心路历程学rust 得改变理解的习惯",
+        "voteup_count": 0,
+        "updated_time": "2023-03-09 19:43:22",
+        "question_id": 472894495,
+        "user_id": "b2cf81b92d3082e381aa97581e6b2c05"
+    },
+    {
+        "answer_id": 2847331172,
+        "content": "难个屁！",
+        "voteup_count": 0,
+        "updated_time": "2023-01-16 08:26:09",
+        "question_id": 472894495,
+        "user_id": "65939d6ba7af974ab70894280004255e"
+    },
+    {
+        "answer_id": 2473354045,
+        "content": "RUST标准库双向链表LinkedList<T>源代码分析",
+        "voteup_count": 1,
+        "updated_time": "2022-05-06 19:52:29",
+        "question_id": 472894495,
+        "user_id": "fba048e2e35e013f401ca35b9dd393f6"
+    },
+    {
+        "answer_id": 3479820185,
+        "content": "为什么要执着于用rust写链表呢？rust就是通过限制你能编出来的程序样子来保证程序安全的。就跟操作系统里通过破坏死锁的必要条件来预防死锁的做法一样，结果必然是严重扭曲程序设计。就跟c语言里通过限制goto能跳转的目标来保证c语言的语义安全一样，结果必然是你要跳到goto跳不到的目标必须得在汇编层面做工作。我以前刚学汇编时，每编一个汇编程序，我都要求自己再编一个等价的c语言。编着编着发现自己在用c语言费劲地模拟汇编语言，这他妈就不是c语言正常的用法。本人对rust了解甚浅，仅供参考。",
+        "voteup_count": 0,
+        "updated_time": "2024-04-26 21:39:37",
+        "question_id": 472894495,
+        "user_id": "92f18355d18e40d41c366c95d373c65f"
+    }
+]

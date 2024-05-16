@@ -1,0 +1,186 @@
+[
+    {
+        "answer_id": 3474367708,
+        "content": "开洞就是靠编译器实现用户自己写代码几乎不可能实现的功能。这里的几乎不可能的原因主要是抽象级别的不可能，而非性能方面的不可能。比如 `__LINE__` 这个宏，用来表示当前行数。如果让用户自己写，自己定义这个宏，几乎无法实现这个功能，但是编译器可以轻松实现：编译时肯定要读取源码啊，那这时__LINE__出现在第几行不是轻松知道？于是就在编译器里规定：保留“__LINE__”宏名，不能由用户定义，当用户使用__LINE__这个宏时，替换成当前代码行数。这就叫开洞。我们可以说“__LINE__这个特性，需要靠编译器开洞实现“Compiler Explorer - C++ (x64 msvc v19.38)举个相反的例子std::array，C++ STL库容器。它是C++特性，但它非常简单，我们可以轻易看到它所有源码，用户自己手撸也可以实现，那这个特性就不需要开洞实现。附上MSVC的std::array实现，非常简单，没多少东西：template <class _Ty, size_t _Size>\nclass array { // fixed size array of values\npublic:\n    using value_type      = _Ty;\n    using size_type       = size_t;\n    using difference_type = ptrdiff_t;\n    using pointer         = _Ty*;\n    using const_pointer   = const _Ty*;\n    using reference       = _Ty&;\n    using const_reference = const _Ty&;\n\n    using iterator       = _Array_iterator<_Ty, _Size>;\n    using const_iterator = _Array_const_iterator<_Ty, _Size>;\n\n    using reverse_iterator       = _STD reverse_iterator<iterator>;\n    using const_reverse_iterator = _STD reverse_iterator<const_iterator>;\n\n#if _HAS_TR1_NAMESPACE\n    _DEPRECATE_TR1_NAMESPACE void assign(const _Ty& _Value) {\n        _STD fill_n(_Elems, _Size, _Value);\n    }\n#endif // _HAS_TR1_NAMESPACE\n\n    _CONSTEXPR20 void fill(const _Ty& _Value) {\n        _STD fill_n(_Elems, _Size, _Value);\n    }\n\n    _CONSTEXPR20 void swap(array& _Other) noexcept(_Is_nothrow_swappable<_Ty>::value) {\n        _Swap_ranges_unchecked(_Elems, _Elems + _Size, _Other._Elems);\n    }\n\n    _NODISCARD _CONSTEXPR17 iterator begin() noexcept {\n        return iterator(_Elems, 0);\n    }\n\n    _NODISCARD _CONSTEXPR17 const_iterator begin() const noexcept {\n        return const_iterator(_Elems, 0);\n    }\n\n    _NODISCARD _CONSTEXPR17 iterator end() noexcept {\n        return iterator(_Elems, _Size);\n    }\n\n    _NODISCARD _CONSTEXPR17 const_iterator end() const noexcept {\n        return const_iterator(_Elems, _Size);\n    }\n\n    _NODISCARD _CONSTEXPR17 reverse_iterator rbegin() noexcept {\n        return reverse_iterator(end());\n    }\n\n    _NODISCARD _CONSTEXPR17 const_reverse_iterator rbegin() const noexcept {\n        return const_reverse_iterator(end());\n    }\n\n    _NODISCARD _CONSTEXPR17 reverse_iterator rend() noexcept {\n        return reverse_iterator(begin());\n    }\n\n    _NODISCARD _CONSTEXPR17 const_reverse_iterator rend() const noexcept {\n        return const_reverse_iterator(begin());\n    }\n\n    _NODISCARD _CONSTEXPR17 const_iterator cbegin() const noexcept {\n        return begin();\n    }\n\n    _NODISCARD _CONSTEXPR17 const_iterator cend() const noexcept {\n        return end();\n    }\n\n    _NODISCARD _CONSTEXPR17 const_reverse_iterator crbegin() const noexcept {\n        return rbegin();\n    }\n\n    _NODISCARD _CONSTEXPR17 const_reverse_iterator crend() const noexcept {\n        return rend();\n    }\n\n    _CONSTEXPR17 _Ty* _Unchecked_begin() noexcept {\n        return _Elems;\n    }\n\n    _CONSTEXPR17 const _Ty* _Unchecked_begin() const noexcept {\n        return _Elems;\n    }\n\n    _CONSTEXPR17 _Ty* _Unchecked_end() noexcept {\n        return _Elems + _Size;\n    }\n\n    _CONSTEXPR17 const _Ty* _Unchecked_end() const noexcept {\n        return _Elems + _Size;\n    }\n\n    _NODISCARD constexpr size_type size() const noexcept {\n        return _Size;\n    }\n\n    _NODISCARD constexpr size_type max_size() const noexcept {\n        return _Size;\n    }\n\n    _NODISCARD constexpr bool empty() const noexcept {\n        return false;\n    }\n\n    _NODISCARD _CONSTEXPR17 reference at(size_type _Pos) {\n        if (_Size <= _Pos) {\n            _Xran();\n        }\n\n        return _Elems[_Pos];\n    }\n\n    _NODISCARD constexpr const_reference at(size_type _Pos) const {\n        if (_Size <= _Pos) {\n            _Xran();\n        }\n\n        return _Elems[_Pos];\n    }\n\n    _NODISCARD _CONSTEXPR17 reference operator[](_In_range_(0, _Size - 1) size_type _Pos) noexcept /* strengthened */ {\n#if _CONTAINER_DEBUG_LEVEL > 0\n        _STL_VERIFY(_Pos < _Size, \"array subscript out of range\");\n#endif // _CONTAINER_DEBUG_LEVEL > 0\n\n        return _Elems[_Pos];\n    }\n\n    _NODISCARD constexpr const_reference operator[](_In_range_(0, _Size - 1) size_type _Pos) const noexcept\n    /* strengthened */ {\n#if _CONTAINER_DEBUG_LEVEL > 0\n        _STL_VERIFY(_Pos < _Size, \"array subscript out of range\");\n#endif // _CONTAINER_DEBUG_LEVEL > 0\n\n        return _Elems[_Pos];\n    }\n\n    _NODISCARD _CONSTEXPR17 reference front() noexcept /* strengthened */ {\n        return _Elems[0];\n    }\n\n    _NODISCARD constexpr const_reference front() const noexcept /* strengthened */ {\n        return _Elems[0];\n    }\n\n    _NODISCARD _CONSTEXPR17 reference back() noexcept /* strengthened */ {\n        return _Elems[_Size - 1];\n    }\n\n    _NODISCARD constexpr const_reference back() const noexcept /* strengthened */ {\n        return _Elems[_Size - 1];\n    }\n\n    _NODISCARD _CONSTEXPR17 _Ty* data() noexcept {\n        return _Elems;\n    }\n\n    _NODISCARD _CONSTEXPR17 const _Ty* data() const noexcept {\n        return _Elems;\n    }\n\n    [[noreturn]] void _Xran() const {\n        _Xout_of_range(\"invalid array<T, N> subscript\");\n    }\n\n    _Ty _Elems[_Size];\n};\n\ntemplate <class _First, class... _Rest>\narray(_First, _Rest...) -> array<typename _Enforce_same<_First, _Rest...>::type, 1 + sizeof...(_Rest)>;\n",
+        "voteup_count": 251,
+        "updated_time": "2024-04-24 15:05:26",
+        "question_id": 653718431,
+        "user_id": "3e7e750b9d7b4d890cdb30815bef05ec"
+    },
+    {
+        "answer_id": 3475116598,
+        "content": "开洞， 有时候被称作Builtin，可以被翻译成“内建”，是一种没有定义在标准库而是定义在编译器内部的功能。C预处理器的Builtin另一个回答里提到的__LINE__实际上是C预处理器（CPP）的Builtin，Clang-CPP中的Builtin有两种，一种是#pragma宏指令，一种是宏定义。这里拿Clang举例子，因为Clang开源（而MSVC不开源），且代码较GCC更加易懂，且Clang需要同时支持MSVC、GCC、Apple Clang的诸多功能。pragma宏pragma宏指令用于控制编译器的行为，因此必然无法通过库文件来实现。详见该说明： 实现定义的行为控制 - cppreference.comClang-CPP内建的pragma宏指令的列表在：https://github.com/llvm/llvm-project/blob/llvmorg-18.1.4/clang/lib/Lex/Pragma.cpp#L2131内建宏定义宏定义（即#define宏指令)又分为object-like macro和function-like macro，内建宏定义无需任何define宏指令或-D命令行参数就可以使用。 Clang-CPP内建的宏定义的的列表在：https://github.com/llvm/llvm-project/blob/llvmorg-18.1.4/clang/lib/Lex/PPMacroExpansion.cpp#L339其中的object-like macro， 如__LINE__, __DATE__都是显而易见必须由CPP完全读取源代码后才能展开，无法在库文件中实现，而大多数function-like macro都用于条件编译和编译器功能检测，也是只有到了编译的时候才能知道被什么编译器编译的。Clang的Builtin这里指Clang支持的各种语言，如C、C++、Object C、Object C++、OpenCL、HLSL、OpenMP、CUDA其列表在：https://github.com/llvm/llvm-project/blob/llvmorg-18.1.4/clang/include/clang/Basic/Builtins.def里面有libc/libm定义的数学计算。虽然libm包括了这些计算的代码，但这些计算需要LLVM生成机器码时才能根据目标架构、指令集扩展、操作系统环境决定生成机器指令还是调用特定软件库的函数（如compiler-rt、libgcc_s.so、libm.so)内存/C字符串操作。生成LLVM IR后可以根据已知的信息简化代码，例如memcpy执行固定长度的内存复制可以被替换为SIMD的mov操作。用于调试、检查的代码，可以被编译器优化掉。原子指令操作，需要根据目标架构、指令集扩展决定生成机器指令还是调用特定软件库的函数（如compiler-rt、libatomic.so)转移控制流的函数，如exit、abort、pthread_create、vfork。这时候编译器仍会调用libc原本的函数，但会被编译器识别到之后用于控制流分析。不变量声明，__builtin_assume、__builtin_expect、__builtin_unreachable, 用于提供额外的优化信息。printf系函数，用于检查格式化模版是不是错用了其他GCC、Object C、OpenCL、HLSL、OpenMP、CUDA和微软MSVC用到的杂七杂八的东西其实这些Builtin都可以用库函数实现，但是编译器识别这些函数之后，可以做成更近一步的优化（或者诊断），减少不必要的库函数调用，也可以简化编译器的设计（比如Clang/LLVM的前后端分离设计就能把大量的数学计算的指令分配后移到编译流程的后面）。Clang++的BuiltinC++的STL许多部分都需要编译器开洞才能实现，可惜Clang源码上没有一个统一的列表表明哪个是开洞的。可以参考这个问题 C++标准库中是否有需要依赖编译器魔法才能实现的功能？Rust的Builtinrustc也有很多Builtin，但这些Builtin故意不允许在非nightly版本使用，且永远不会stable，因此绝大多数情况下只有标准库会使用这些Builtin。Rust的Builtin分为builtin macro、builtin attribute、lang itembuiltin macro：编译器实现的宏. 根据宏的种类分为函数宏(function like macro/bang! macro), 属性宏(attribute macro), 派生宏（derive macro)列表如下：https://github.com/rust-lang/rust/blob/1.77.2/compiler/rustc_builtin_macros/src/lib.rs#L72在标准库中搜索#[rustc_builtin_macro]即可找到这些宏的文档， 目前共有49个 builtin macro.builtin attribute：内置的attributeRust reference列出了内置的attribute：The Rust Reference很多attribute都是unstable的，需要使用feature gate开启，也有些是rustc内部的，rustc有一个列表：https://github.com/rust-lang/rust/blob/1.77.2/compiler/rustc_feature/src/builtin_attrs.rslang item：语言项。用法为#[lang = \"...\"]，明确的编译器开洞。 参考unstable book的说明： The Rust Unstable Book列表如下：https://github.com/rust-lang/rust/blob/1.77.2/compiler/rustc_hir/src/lang_items.rs#L140语言项有如下功能标记或定义具有特殊语义的Trait，如Sized, Copy, Clone, Sync, Drop，Pin，Unpin标记可重载的操作符Trait，即core::ops::*, 因为这些Trait不使用通常的方法调用语法，而是使用操作符panic和unwind相关的函数format_args相关的函数特殊的类型，例如Box允许部分move，UnsafeCell允许内部可变性，ManuallyDrop不自动调drop, MaybeUninit不要求数据有效异步、生成器语法相关的内部实现",
+        "voteup_count": 55,
+        "updated_time": "2024-04-22 23:00:11",
+        "question_id": 653718431,
+        "user_id": "5687234f176a34d8890ae0dc1811c119"
+    },
+    {
+        "answer_id": 3474306037,
+        "content": "其实主要是c++存在编译器开洞这个概念，因为c++即使不开洞、仅用标准语言写个库就能做到很多事情，个别通过符合标准的源代码做不到的，或者效率很低的事情，才给编译器开个洞。其他语言基本上浑身是洞。比方说，用纯正的Pascal语言就没法实现writeln，因为你没法写一个过程让它接受实参是aFloatNumber:width:decimals这种语法，writeln名义上是库，实际上是编译器特殊处理的。浑身是洞等于没有开洞的概念。",
+        "voteup_count": 57,
+        "updated_time": "2024-04-23 09:45:21",
+        "question_id": 653718431,
+        "user_id": "e31fbd2072341d0d11028af76a1b586a"
+    },
+    {
+        "answer_id": 3474448989,
+        "content": "用汇编不叫开洞。单纯语言层面本身实现不了的抽象设计功能，需要编译器辅助，俗称“编译器开洞”。那些功能是“开洞”实现的？最典型的sizeof dynamic_cast就是编译器“开洞。 很多人喜欢在c++模板编译时期计算，完成 零成本抽象，用很多黑魔法来进行类型限制或类型判断，比如编译时期操作的静态字符串，代码丑陋兼容性不高，但如果让编译器来提供基础功能，会实现的更稳定更好更清洁，这就是“开洞”。C++标准库中是否有需要依赖编译器魔法才能实现的功能？ - 知乎 (zhihu.com)再比如rust，rust不支持变长参数，那如何实现不定长参数print？rust编译器单独提供了一个format_args     macro_rules! format_args {\n        ($fmt:expr) => {{ /* compiler built-in */ }};\n        ($fmt:expr, $($args:tt)*) => {{ /* compiler built-in */ }};\n    }\n\n    let display = format_args!(\"{} foo {:?}\", 1, 2).to_string();这个宏代码没有具体的实现 是空的，由编译器动态处理不定长参数成fmt::Arguments包装。这就是编译器开洞。",
+        "voteup_count": 40,
+        "updated_time": "2024-04-22 15:01:45",
+        "question_id": 653718431,
+        "user_id": "df7917dc2029bc4739c9090f8ffaccee"
+    },
+    {
+        "answer_id": 3476074055,
+        "content": "STL之所以是标准库，是因为有些功能可以写死在编译器里，不能替换成另一个实现。比如std::initializer_list，用户写不出等效代码。这应该算开洞了，但没完全开洞，因为STL就是C++，不可分割。",
+        "voteup_count": 50,
+        "updated_time": "2024-04-23 18:15:12",
+        "question_id": 653718431,
+        "user_id": "4d9564750c9d62b60439b4d0f7194599"
+    },
+    {
+        "answer_id": 3475163862,
+        "content": "就是那些看起来像标准库，但是你完全没办法用标准语法实现的库函数",
+        "voteup_count": 28,
+        "updated_time": "2024-04-22 23:58:37",
+        "question_id": 653718431,
+        "user_id": "a75a48b091777cde22aad97dfd672e05"
+    },
+    {
+        "answer_id": 3474273728,
+        "content": "以前Ken Thompson能轻易进入任何UNIX系统，大家把UNIX源码研究透了也搞不明白，后来他获得图灵奖的时候坦白说在编译器里做了手脚，源码没问题但是编译的时候会在系统留后门",
+        "voteup_count": 144,
+        "updated_time": "2024-04-22 09:58:50",
+        "question_id": 653718431,
+        "user_id": "b7d3ecca2d6f8c125a0e104e0605be0e"
+    },
+    {
+        "answer_id": 3475676220,
+        "content": "rust编译器给标准库（core,alloc,std三大库）留了不少后门。有一些是单靠语言本身无法实现功能，有一些是编译器的实现还没稳定，给标准库留了一个对外提供调用的接口，后期稳定后再把实现挪到标准库里面。",
+        "voteup_count": 10,
+        "updated_time": "2024-04-23 15:23:53",
+        "question_id": 653718431,
+        "user_id": "30e2a5191f2fc309a6d3f2f0953a80e0"
+    },
+    {
+        "answer_id": 3474703317,
+        "content": "c++里常见，一些标准库的东西没有编译器特殊支持仅靠原生语法根本就不可能实现。",
+        "voteup_count": 20,
+        "updated_time": "2024-04-22 15:56:33",
+        "question_id": 653718431,
+        "user_id": "62eabf494ead3afd90813b7ef2867dad"
+    },
+    {
+        "answer_id": 3479221308,
+        "content": "和【汇编】的关系不大， 是否需要【编译器开洞】的一个主要因素是 【编译到链接过程中被丢弃的信息，这些信息对运行状态来说是冗余的，但是对于编写程序和IDE来说是必需的】流程：   阶段0.  你写的代码，写完保存。 到此为止和编译器没有任何关系。就是个txt ，语法对不对都完全没有关系。如果你在这个阶段使用了IDE（不管是简单的vim 还是复杂的VS），\n那么IDE 会干预这个阶段，\nIDE 对这个阶段的干预可多可少：\n     对于【简单IDE】 大多是简单的 token 分割(不一定是编译器做的那种分割，可以更简化)，比如你写了\n         sturct {   a=\"xxxxx\";}\n         简单IDE 会  得出   【struct】 【{】 【a】 【=】 【\"xxxxx\"】 【;】 【}】\n             可以忽略错误 比如上面 a 前面没有类型，不需要报错\n             然后简单 染色  高亮 提示 一下， 简单IDE并不能做 完整提示\n         这类IDE 的补全要么没有，要么极其简陋\n             比如 裸体vim\n     对于【稍微复杂点的IDE】， 会做和编译器一样规则的 【完整片段】解析，比如:\n         sturct {  int a=10;}  这是个【完整片段】， IDE 会 去解析它（\n            很可能直接使用和编译器一样的解析器，也可能是非完整parser\n         ）\n         但是一般会忽略一些条件，比如上面的 sturct {  int a=10;}  没有名字， 但是 片段本身是正常片段\n         所以此时也许不会报错，报错可能会出现在载入你写的整个文件之后\n         但是此类IDE 一般没法做彻底的 【不完整片段】解析，比如\n            struct { in           \n            你输入了半截代码时候，此类编译器不此刻不会有反应，报错可能会出现在载入你写的整个文件之后\n            或者输入下一个片段的时候\n         这类IDE 的补全 基本上是够用的，但是效率有点低\n             比如nodejs 的 终端 \n             nodepad++(加插件)\n     对于【复杂的IDE】会做不同程度的 【不完整片段】解析(不完整解析比正常解析复杂的多)：\n         正因为这样，才能及时的给出相应的 提示和补全\n             这类IDE 比如 android studio , VS,\n         同时因为进行了详尽的分析，能给出巨多的信息\n             比如 VS 和 IDAPro  \n         这类IDE的缺点就是太大太慢\n\n     【稍微复杂点的IDE】 和 【复杂的IDE】 中间的  vscode monaco 这类就比较适中，不那么powerful,但是\n      对于 95% 的情况足够用\n阶段1： 编译器预处理  比如宏，这个阶段有不少功能是靠 语言的语法本身 提供的 关键字+运算符+API 不能解决的。 \n这个阶段的 加入的一些常量，指示[[]] 就得靠编译器在编译过程中生成出来，你直接用就好，\n你自己用(关键字+运算符+API)没法实现阶段2：这个阶段有很多东西 是【依赖 源代码的文本】 推导出来的，所以如果 语言本身不提供 一些功能， 那么就要趁这个阶段，把它导出来。 但是这起始是个 鸡生蛋 蛋生鸡的问题。 如果你的程序里嵌入一个用语言本身提供的功能实现的编译器前端，那么又是可以的，比如：c++ 不提供 is_struct,\n但是编译器提供，\n那我在我的程序里 include <编译器前端> 不就行了？\n\n#include <clang/Lex/HeaderSearch.h>\n#include <clang/Lex/Preprocessor.h>\n#include <clang/AST/AST.h>\n#include <clang/AST/ASTConsumer.h>\n#include <clang/AST/ASTContext.h>\n#include <clang/AST/RecursiveASTVisitor.h>\n#include <clang/Driver/Options.h>\n#include <clang/Frontend/ASTConsumers.h>\n#include <clang/Frontend/CompilerInstance.h>\n#include <clang/Frontend/FrontendActions.h>\n#include <clang/Rewrite/Core/Rewriter.h>\n#include <clang/Tooling/CommonOptionsParser.h>\n#include <clang/Tooling/Tooling.h>\n#include <clang/AST/ASTConsumer.h>\n#include <clang/AST/RecursiveASTVisitor.h>\n#include <clang/Frontend/CompilerInstance.h>\n#include <clang/Frontend/FrontendAction.h>\n#include <clang/Tooling/Tooling.h>\n#include <clang/AST/RecordLayout.h>\n\n\n....\n  bool VisitCXXRecordDecl(CXXRecordDecl *Declaration) {\n      llvm::outs() << \"the TTK tagUsed is:\" << Declaration->getKindName() << \"\\n\";           //struct \n      llvm::outs() << \"the name is:\" << Declaration->getQualifiedNameAsString() << \"\\n\";\n      return true;\n  }\n  bool VisitFieldDecl(FieldDecl* fld_decl) {\n      llvm::outs() << \"the name is:\"  << fld_decl->getName()     << \"\\n\";\n      llvm::outs() << \"the name  is:\"        << fld_decl->getNameAsString() << \"\\n\";\n      llvm::outs() << \"the index  is:\"       << fld_decl->getFieldIndex() << \"\\n\";\n\n  }\n.....总之这类东西  类似 is_union is_struct 需要  依赖 从源码文本 推导出的信息(例如语法树) 才能生成的API，就属于 \"编译器开洞\".因为后面的阶段  依赖源码文本 的信息 或多或少都有一些丢弃。  ",
+        "voteup_count": 3,
+        "updated_time": "2024-04-26 12:05:42",
+        "question_id": 653718431,
+        "user_id": "3f0a1ebc0c81cf395ebcf62213a09fe1"
+    },
+    {
+        "answer_id": 3475147569,
+        "content": "比如使用gcc的glibc库中有很多likely，这个就是编译器开洞，不在语言标准里",
+        "voteup_count": 4,
+        "updated_time": "2024-04-22 23:38:05",
+        "question_id": 653718431,
+        "user_id": "e5ce87b73e78126859bed30d987468dc"
+    },
+    {
+        "answer_id": 3474500859,
+        "content": "就是靠编译器实现一些特殊功能。比如memcpy函数，正常情况就是链接到库里的一个函数地址。但开洞后，编译器知道这是一个内存拷贝函数，可以根据你的上下文做一些优化，调用不同的函数，甚至直接内联成几条指令",
+        "voteup_count": 45,
+        "updated_time": "2024-04-22 12:57:54",
+        "question_id": 653718431,
+        "user_id": "5dd823caec50910ede9314d4a61e9372"
+    },
+    {
+        "answer_id": 3474638468,
+        "content": "比如cpp可以通过模板实现元函数搞元编程，本质是将cpp编译器魔改成通过模板语法对目标代码字符串处理的解释器，此时类型不过是字符串——用来模板特化匹配选择的控制字。对于运行时来说，可以认为是一种编译期的静态运算结构，如果静态运算结构是通过改变编译器本身代码，在目标代码字面的语法分析阶段实现(而不是通过模板这种编译时文本处理机制实现)，就是编译器打洞，例如cpp的rtti，通常用来将代码文本的信息带入运行时(编译后成为二进制文件，代码文本如变量名字符串、文本行数等信息会丢失，通过编译器将这些信息保存在运行时用到的二进制文件中)。",
+        "voteup_count": 7,
+        "updated_time": "2024-04-23 19:06:52",
+        "question_id": 653718431,
+        "user_id": "60b7e360cfb9d2a8697f399e07758b31"
+    },
+    {
+        "answer_id": 3476218025,
+        "content": "无法用语言本身或标准库来实现的功能, 只能依靠编译器在编译时来实现的, 就是编译器开洞.举个例子, 在 Java 语言中, Object 类型上有一个 getClass() 方法, 返回这个这个对象对应的的 Class 对象, 它的签名是:public final native Class<?> getClass();如果按照 Java 语言的规则, 下面这段代码是不可能编译通过的:Number n = 0;\nClass<? extends Number> c = n.getClass();必须插入转型才能编译通过:Number n = 0;\nClass<? extends Number> c = (Class<? extends Number>) n.getClass();但实际上, 第一段代码可以编译通过, 这就是编译器开了洞, 使得 getClass() 函数返回的静态类型是 Class<? extends |X|>, 其中 X 是变量声明的静态类型 (如上面例子中的 Number ), 而不是 Object 类里写的 Class<?>. ",
+        "voteup_count": 5,
+        "updated_time": "2024-04-26 20:49:04",
+        "question_id": 653718431,
+        "user_id": "1b43983eaea8a6d045a6aa9331f4fc89"
+    },
+    {
+        "answer_id": 3475666010,
+        "content": "\"编译器开洞\"这个说法可能源于中文互联网社区，它的含义大致是指编译器中存在的漏洞或者是编译器在编译过程中因为某些原因（如优化策略、兼容性考虑等）没有严格执行语言规范，导致可以被开发者利用来进行非预期操作或者规避一些安全性检查的现象。例如，编译器可能对某些代码片段进行过于激进的优化，这可能会破坏程序的原本逻辑，或者编译器可能忽略了某些潜在的安全问题，使得攻击者可以通过特殊的编码技巧来触发这些漏洞。这种情况在编程语言的早期版本或者非主流编译器中较为常见。总的来说，\"编译器开洞\"是一个比较通俗的表述，它强调的是编译器在保证程序正确性和安全性方面的不足之处。在软件工程实践中，我们应该尽量选择经过广泛测试、安全性良好的编译器，并遵循最佳实践来编写代码，以减少这类问题的发生。",
+        "voteup_count": 2,
+        "updated_time": "2024-04-23 12:30:06",
+        "question_id": 653718431,
+        "user_id": "0d5ea9ad6bc59b19944cb12727fdf254"
+    },
+    {
+        "answer_id": 3475466537,
+        "content": "标题（学术版）：编译器优化技术：内联汇编与编译器\"开洞\"标题（生动版）：编译器也要“开洞”透气？揭秘优化黑科技！摘要：编译器“开洞”并非真的在编译器上开个洞，而是一种形象的说法，指的是在某些特定情况下，为了获得更好的性能或实现特定功能，程序员需要直接使用汇编语言来编写部分代码，而不是完全依赖高级编程语言。本文将通过通俗易懂的方式解释这一概念，并探讨其应用场景。【表格】编译器“开洞”的奥秘序号内容描述实例/解释关键点备注1什么是编译器“开洞”？在高级编程语言中嵌入汇编代码直接操作底层硬件，提高性能类似于给编译器“开个口子”，让汇编代码直接嵌入2为什么需要“开洞”？高级语言无法满足所有需求实现特定功能，优化性能如：直接访问特定寄存器、使用特殊指令3如何“开洞”？使用内联汇编或外部汇编模块在高级语言中嵌入汇编语句需要对汇编语言有深入了解4“开洞”的应用场景驱动程序、嵌入式系统、游戏开发等对性能有极高要求的场景例如：3D图形渲染、物理模拟5“开洞”的优缺点优点：性能高、功能强大；缺点：可读性差、维护困难需要权衡利弊汇编语言难以理解和维护6如何避免滥用“开洞”？仅在必要时使用，保持代码清晰避免过度优化，注重代码可读性和可维护性“开洞”不是万能的，要谨慎使用7编译器优化的其他方法循环展开、常量折叠、死代码消除等通过编译器选项或配置进行自动优化不需要手动嵌入汇编代码8总结与展望编译器“开洞”是一种高级技巧，需要谨慎使用未来编译器可能会更加智能，自动进行必要的优化程序员应关注代码质量和可维护性关键点关系描述：编译器“开洞”是通过在高级编程语言中嵌入汇编代码来实现特定功能或优化性能的技巧。使用内联汇编或外部汇编模块是“开洞”的常用方法，但需要程序员对汇编语言有深入了解。“开洞”在驱动程序、嵌入式系统、游戏开发等对性能有极高要求的场景中应用广泛。使用“开洞”需要权衡利弊，避免过度优化和滥用，注重代码的可读性和可维护性。参考资料：深入理解计算机系统（第三版）：详细介绍了计算机系统的底层原理和汇编语言的应用。汇编语言与计算机体系结构：深入讲解了汇编语言和计算机体系结构的关系。关键词：编译器“开洞”、内联汇编、性能优化、可读性、可维护性。",
+        "voteup_count": 3,
+        "updated_time": "2024-04-23 10:07:34",
+        "question_id": 653718431,
+        "user_id": "75f56d22fc2e05d0973a2258e1edd1ca"
+    },
+    {
+        "answer_id": 3475427502,
+        "content": "编译器就是一个普通程序，没什么大不了的什么是编译器？编译器是一个将高级语言翻译为低级语言的程序。首先我们一定要意识到编译器就是一个普通程序，没什么大不了的。在没有弄明白编译器如何工作之前你可以简单的把编译器当做一个黑盒子，其作用就是输入一个文本文件输出一个二进制文件。基本上编译器经过了以下几个阶段，等等，这句话教科书上也有，但是我相信很多同学其实并没有真正理解这几个步骤到底在说些什么，为了让你彻底理解这几个步骤，我们用一个简单的例子来讲解。假定我们有一段程序：while (y < z) \n{\nint x = a + b;y += x;\n}那么编译器是怎样把这一段程序人类认识的程序转换为CPU认识的二进制机器指令呢？提取出每一个单词：词法分析首先编译器要把源代码中的每个“单词”提取出来，在编译技术中“单词”被称为token。其实不只是每个单词被称为一个token，除去单词之外的比如左括号、右括号、赋值操作符等都被称为token。从源代码中提取出token的过程就被称为词法分析，Lexical Analysis。经过一遍词法分析，编译器得到了以下token：T_While      whileT_LeftParen   （T_Identifier   yT_Less         <T_Identifier   zT_RightParen   )T_OpenBrace    {T_Int         intT_Identifier   xT_Assign       =T_Identifier   aT_Plus         +T_Identifier   bT_Semicolon    ;T_Identifier   yT_PlusAssign   +=T_Identifier   xT_Semicolon    ;T_CloseBrace   }就这样一个磁盘中保存的字符串源代码文件就转换为了一个个的token。这些token想表达什么意思：语法分析有了这些token之后编译器就可以根据语言定义的语法恢复其原本的结构，怎么恢复呢？原来，编译器在扫描出各个token后根据规则将其用树的形式表示出来，这颗树就被称为语法树。语法树是不是合理的：语义分析有了语法树后我们还要检查这棵树是不是合法的，比如我们不能把一个整数和一个字符串相加、比较符左右两边的数据类型要相同，等等。这一步通过后就证明了程序合法，不会有编译错误。根据语法树生成中间代码：代码生成语义分析之后接下来编译器遍历语法树并用另一种形式来表示，用什么来表示呢？那就是中间代码，intermediate representation code，简称IR code。上述语法树可能就会表示为这样的中间代码：Loop: x   = a + b      y   = x + y      _t1 = y < z      if _t1 goto Loop怎么样，这实际上已经比较接近最后的机器指令了。只不过这还不是最终形态。中间代码优化在生成中间代码后要对其进行优化，我们可以看到，实际上可以把x = a + b这行代码放到循环外，因为每次循环都不会改变x的值，因此优化后就是这样了：x   = a + bLoop: y   = x + y_t1 = y < zif _t1 goto Loop中间代码优化后就可以生成机器指令了。代码生成将上述优化后的中间代码转换为机器指令：add $1, $2, $3Loop: add $4, $1, $4      slt $6, $1, $5      beq $6, loop最终，编译器将程序员认识的代码转换为了CPU认识的机器指令。",
+        "voteup_count": 3,
+        "updated_time": "2024-04-23 09:40:20",
+        "question_id": 653718431,
+        "user_id": "dd0cf3f9b8809033760b59336b599f6d"
+    },
+    {
+        "answer_id": 3475772898,
+        "content": "愚见ABI",
+        "voteup_count": 0,
+        "updated_time": "2024-04-23 14:08:58",
+        "question_id": 653718431,
+        "user_id": "9b405a02cca541d35bf3c1f78dbbbd43"
+    },
+    {
+        "answer_id": 3474689338,
+        "content": "其实asm层面某些标签我我觉得就已经接近开洞这个概念了……比如跳到某个标签……需要相对寻址的……人类怎么可能做到……但是编译器就可以……",
+        "voteup_count": 0,
+        "updated_time": "2024-04-22 15:45:20",
+        "question_id": 653718431,
+        "user_id": "7207493b4a67327dbd625b7e6838ee33"
+    },
+    {
+        "answer_id": 3474986028,
+        "content": "\"编译器开洞\"通常是指在编译器设计和实现时，为了特定目的或者优化，有意或无意地绕过了一些安全检查或者规则，形成了一种可以被利用的漏洞。这些“洞”可能允许程序员执行一些非标准的、可能有风险的操作，或者可能导致代码的安全性降低。例如，有些编译器可能会对某些特定的代码模式进行特殊处理，以提高运行效率，但如果这种处理方式存在缺陷，就可能成为攻击者利用的漏洞。另外，一些编译器可能会忽略一些严格的类型检查或边界检查，这也可能为恶意代码提供可乘之机。因此，“编译器开洞”并不是一个正面的技术术语，它更多地用于描述编译器中的错误或不安全的设计决策。在软件开发中，我们通常希望编译器能够尽可能严格地遵循语言规范，避免产生此类问题。",
+        "voteup_count": 2,
+        "updated_time": "2024-04-22 20:37:11",
+        "question_id": 653718431,
+        "user_id": "b08fbc1dfbad1e509bfb631fe4fb629f"
+    },
+    {
+        "answer_id": 3475575825,
+        "content": "\"编译器开洞\"通常指的是编译器中存在的漏洞或安全问题。编译器是将源代码转换为可执行代码的软件工具。如果编译器存在漏洞，攻击者可能会利用这些漏洞来执行恶意代码或者获取未经授权的权限。因此，发现和修复编译器中的漏洞对于确保软件的安全性至关重要。",
+        "voteup_count": 2,
+        "updated_time": "2024-04-23 11:18:27",
+        "question_id": 653718431,
+        "user_id": "0a2ca380afc70f78de2631651d7b8f6b"
+    },
+    {
+        "answer_id": 3474222463,
+        "content": "\"编译器开洞\"通常指的是编译器的漏洞或安全漏洞。编译器是将源代码转换为机器可执行代码的软件工具。当编译器存在漏洞时，可能会导致程序执行时的不确定行为、安全风险或系统崩溃。这些漏洞可能被黑客利用，从而进行恶意攻击或者非法访问系统资源。因此，编译器开洞是需要及时修复和解决的安全问题。",
+        "voteup_count": 2,
+        "updated_time": "2024-04-22 09:19:01",
+        "question_id": 653718431,
+        "user_id": "0cd45db4c993d3e4277a8bed8772f3ea"
+    },
+    {
+        "answer_id": 3474994076,
+        "content": "std::is_enum好像就必须开洞其他比如__FILE__也是",
+        "voteup_count": 0,
+        "updated_time": "2024-04-22 20:47:16",
+        "question_id": 653718431,
+        "user_id": "f74505ee64ab9baeb5d346d383a484fc"
+    }
+]

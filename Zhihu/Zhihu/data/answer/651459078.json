@@ -1,0 +1,362 @@
+[
+    {
+        "answer_id": 3485409012,
+        "content": "我们小模型训练的工作被ICML 2024接收了，感谢co-author的共同努力！论文链接：Rethinking Optimization and Architecture for Tiny Language Modelshttps://arxiv.org/abs/2402.02791 训练和测评链接：https://github.com/YuchuanTian/RethinkTinyLM最近一直炼小的语言模型，去打造能在端侧设备上跑起来的大模型。在这样的一个小模型上，我们有机会做大量实验，从而把影响模型训练的各个方面都搞清楚，总结出tokenizer裁剪、架构微调、参数继承和多轮训练着4项技术来提升模型效果。基于这些训练策略，我们打造出盘古π-1.5B-Pro模型，只有1.5B参数量，可以很轻松地在端侧设备上跑起来。感谢大家的carry，整体模型评测结果还是很喜人的：最近几个月，小模型越来越卷了，每天都在被不断新的模型轰。。。 相比投稿的时候，我们的盘古π-1.5B模型的效果也提升了不少，待整理下结果和大家分享。对论文的详细介绍可见专栏：王云鹤：极致炼丹术：对“小”的大模型的优化重新思考盘古π论文链接如下：PanGu-π: Enhancing Language Model Architectures via Nonlinearity Compensation此外，和小伙伴们共同完成了一些工作，也被ICML接受了，相关论文和代码陆续更新中...",
+        "voteup_count": 69,
+        "updated_time": "2024-05-02 13:10:39",
+        "question_id": 651459078,
+        "user_id": "72e969d88ba05c9a2baaa5cbe434b342"
+    },
+    {
+        "answer_id": 3485219057,
+        "content": "10分钟前刚收到邮件，还好中了（不然要改投neurips我的旅游计划就废了）。分数供参考：rebuttal 前 3,5,6 => rebuttal 后 5,6,7 (confidence 3,3,3) 论文标题：Online Cascade Learning for Efficient Inference over Streams摘要：大型语言模型（LLM）被企业广泛用于处理数据流中的复杂任务，但其高昂的计算成本极大限制了应用场景。我们提出了 Online Cascade Learning （在线级联学习）这一新方法来解决这一挑战。该方法旨在建立一系列模型构成 Cascade，从简单的 Logistic Regression 模型开始，最终过渡到强大的 LLM，用合适大小的模型对应处理不同难度的任务。通过把 Online Cascade Learning 的过程规约为 Imitation Learning 问题，我们证明了所提出的在线学习算法可以实现 No-regret 的理论性能保证。实验结果显示，我们的方法在保证与GPT-3.5、Llama 2 70B 模型相近的准确率的同时，能够将推理成本降低高达 90%。后续会更新一个更详细的介绍在这里，欢迎感兴趣的朋友一起讨论。(有没有今年的开会群求拉)",
+        "voteup_count": 94,
+        "updated_time": "2024-05-02 09:18:24",
+        "question_id": 651459078,
+        "user_id": "c0b83a278e3cf514cd904d8acebad2da"
+    },
+    {
+        "answer_id": 3485379233,
+        "content": "AGI的一个重要标准就是模型能完成各种各样的任务，因此我们做了一个包含大量多模态任务的评测集，包含识别，感知，规划，应用等在内的162个多模态任务。评测结果表明目前最强的开源模型已经略微超过了GPT4V，其中包括shlab的InternVL和阿里的Qwen-VL，不过都还只是达到了及格线，我们论文通过任务地图，误差分析等工具给出了未来多模态模型需要提升的方向，欢迎大家关注。论文：https://arxiv.org/pdf/2404.16006.pdf主页：https://mmt-bench.github.io/",
+        "voteup_count": 22,
+        "updated_time": "2024-05-02 12:26:20",
+        "question_id": 651459078,
+        "user_id": "9a596ac4574bca580d48fe66c06b1e2e"
+    },
+    {
+        "answer_id": 3485226454,
+        "content": "今年由于去年特殊原因，存下来几篇工作，加上学弟带飞，一共投了四篇。最后学弟那篇可惜，审稿人没有回复，我这边一下re三篇有点力不从心，所以直接放弃了一篇，花了两周时间re了两篇，最终结果都是好的，今天睡觉惊醒了好几次。稍微介绍下我的工作，我主要做演化强化学习融合，致力于解决各类优化问题，中的这两篇工作都是做策略搜索的，我也正在研究一些其他工作，更容易落地的工作。后面我会尽快发出来。EvoRainbow: Combining Improvements in Evolutionary Reinforcement Learning for Policy Search这篇主要是系统分析了目前有的ERL工作的技术，从五个角度进行了拆解，给出了选择建议并类似于Rainbow，融合了一个新的框架得到了EvoRainbow。Value-Evolutionary-Based Reinforcement Learning这篇主要解决的是ERL社区对于value based RL方法的忽视，专门构建了特定的优化方案，并进行了大规模的评估与测试，证明了方案的有效性。我的工作代码都是会迅速开源的，欢迎大家关注！也欢迎大家加入ERL社区的研究中！另外感兴趣的可以看一下我之前的工作，当然还有和我的大哥们一起搞得文章，比如Sample-Efficient Quality-Diversity by Cooperative Coevolution  ICLR 2024 (888)演化强化学习算法最全Survey-三大方向-十多个研究分支ICML 2023 RACE: 首个在复杂任务下展示了进化算法能够进一步提升MARL的通用混合框架（MARL+演化算法+表征学习）ICLR 2023: 融合演化算法与强化学习进行策略搜索的新SOTA",
+        "voteup_count": 29,
+        "updated_time": "2024-05-02 09:31:07",
+        "question_id": 651459078,
+        "user_id": "0fdf06b1ee6834aa82caa99206c14b6e"
+    },
+    {
+        "answer_id": 3485397640,
+        "content": "一作中了两篇ICML，分别是扩散模型在文生图领域（ RPG）和AI for Science 领域的应用，也是团队的重点关注方向。目前我们的RPG工作一直在收集使用者的意见和反馈，之后几个月将会迎来重大更新，用于满足更复杂、更贴近真实世界的生成需求，欢迎大家交流合作！",
+        "voteup_count": 14,
+        "updated_time": "2024-05-02 12:53:18",
+        "question_id": 651459078,
+        "user_id": "af2cb22d2f351f447beeddcbdeba60b7"
+    },
+    {
+        "answer_id": 3486209068,
+        "content": "和舍友一人中了一个6665/754，咱那个在arxiv上挂了一年，年初老板说要不投ICML，改下中了。",
+        "voteup_count": 0,
+        "updated_time": "2024-05-03 12:32:16",
+        "question_id": 651459078,
+        "user_id": "1f18035e582cd4b246889f7b2fdfd1f4"
+    },
+    {
+        "answer_id": 3485346778,
+        "content": "755被拒，confidence223，搞理论太难了，开始意见表明审稿人没看懂，反复拉扯解释，最后说认可贡献了，但说论文写得有点混乱。最后AC说还需好好修改论文才能接收，略感无语。",
+        "voteup_count": 20,
+        "updated_time": "2024-05-02 11:42:24",
+        "question_id": 651459078,
+        "user_id": "eb44e97e4c6d3aa8f13a5aae49ec1221"
+    },
+    {
+        "answer_id": 3454951783,
+        "content": "5.2 update：中了中了！这次录取率27.5%，创历史新高。不过为什么没划分Oral，多少差点意思 4.14 update:看到王梦迪教授的帖子，目前ICML整体的分数：21%的文章≥5.529%的文章≥5.0按25%的接受率来算，5.5分以上都很有希望，5-5.5的有50%的概率抽奖-------------------------今年poster和oral的bar会是多少呢   ",
+        "voteup_count": 30,
+        "updated_time": "2024-05-02 08:59:22",
+        "question_id": 651459078,
+        "user_id": "09bb2b209b65035dff8c833a59f2b1fb"
+    },
+    {
+        "answer_id": 3485422831,
+        "content": "764被拒了 而且连个理由都没有 他甚至不愿意复制粘贴一下4的review？",
+        "voteup_count": 7,
+        "updated_time": "2024-05-02 13:31:35",
+        "question_id": 651459078,
+        "user_id": "89984258897a11258ad9ed922c460fa0"
+    },
+    {
+        "answer_id": 3485220773,
+        "content": "8545寄了",
+        "voteup_count": 0,
+        "updated_time": "2024-05-02 09:07:53",
+        "question_id": 651459078,
+        "user_id": "1ad45228594811dad232aad897487080"
+    },
+    {
+        "answer_id": 3485268919,
+        "content": "中了中了！！！激动了几天，辗转难眠，终于尘埃落定了",
+        "voteup_count": 6,
+        "updated_time": "2024-05-02 10:10:56",
+        "question_id": 651459078,
+        "user_id": "0a44a1f71ba1b60f7ab7a8ac62ebc910"
+    },
+    {
+        "answer_id": 3485867199,
+        "content": "7555拒了，这次听说好多全正分被拒",
+        "voteup_count": 3,
+        "updated_time": "2024-05-03 00:02:46",
+        "question_id": 651459078,
+        "user_id": "c20a2190b786bb1bf49b364263172505"
+    },
+    {
+        "answer_id": 3485386631,
+        "content": "中了一篇，维也纳旅游力",
+        "voteup_count": 3,
+        "updated_time": "2024-05-02 12:36:58",
+        "question_id": 651459078,
+        "user_id": "70981995cb98f02fbfc2d6f16642cde6"
+    },
+    {
+        "answer_id": 3485213747,
+        "content": "6666中了 感谢 labmates 导师 审稿人",
+        "voteup_count": 2,
+        "updated_time": "2024-05-02 08:58:36",
+        "question_id": 651459078,
+        "user_id": "c1e9923dabcb0a737ab9909416e0563f"
+    },
+    {
+        "answer_id": 3485198772,
+        "content": "结果已出，openreview上可以查结果了！",
+        "voteup_count": 1,
+        "updated_time": "2024-05-02 08:37:52",
+        "question_id": 651459078,
+        "user_id": "dad7801b38063de3f6e996358172d0d6"
+    },
+    {
+        "answer_id": 3456231251,
+        "content": "hjsuifhuig ",
+        "voteup_count": 3,
+        "updated_time": "2024-04-06 15:14:00",
+        "question_id": 651459078,
+        "user_id": "6a8c28977b1ef5a83ec7639c5b39dea6"
+    },
+    {
+        "answer_id": 3485505257,
+        "content": "以后我称呼学长要用敬语了",
+        "voteup_count": 1,
+        "updated_time": "2024-05-02 15:33:02",
+        "question_id": 651459078,
+        "user_id": "1301bd8f0dba7d23c50cdd4d282b99d5"
+    },
+    {
+        "answer_id": 3485238061,
+        "content": "中了，感谢知乎朋友们的陪伴，我们下次见！",
+        "voteup_count": 1,
+        "updated_time": "2024-05-02 09:31:20",
+        "question_id": 651459078,
+        "user_id": "b4652d86cd4e2a0a0da23144fabb9576"
+    },
+    {
+        "answer_id": 3484264777,
+        "content": "出结果了，中国时间上午5月2号8.24出的看了pc写的decision，很负责——————-占个坑，是中国时间什么时候出结果呀",
+        "voteup_count": 1,
+        "updated_time": "2024-05-02 10:17:56",
+        "question_id": 651459078,
+        "user_id": "3fcf92aea0af6129cc0036f68812b035"
+    },
+    {
+        "answer_id": 3485525233,
+        "content": "有没有ICML2024参会群，拉我一个",
+        "voteup_count": 0,
+        "updated_time": "2024-05-02 16:00:11",
+        "question_id": 651459078,
+        "user_id": "d922d44057429ba3112b0a967161e7cc"
+    },
+    {
+        "answer_id": 3485443628,
+        "content": "7 6 4 4中了感恩认真的AC",
+        "voteup_count": 0,
+        "updated_time": "2024-05-02 14:02:49",
+        "question_id": 651459078,
+        "user_id": "320b41500d6e5532e3099003db9a07e2"
+    },
+    {
+        "answer_id": 3485213882,
+        "content": "中了，还愿！",
+        "voteup_count": 0,
+        "updated_time": "2024-05-02 08:58:48",
+        "question_id": 651459078,
+        "user_id": "aec81dede21e9d877ccf9a37d3850602"
+    },
+    {
+        "answer_id": 3485409012,
+        "content": "我们小模型训练的工作被ICML 2024接收了，感谢co-author的共同努力！论文链接：Rethinking Optimization and Architecture for Tiny Language Modelshttps://arxiv.org/abs/2402.02791 训练和测评链接：https://github.com/YuchuanTian/RethinkTinyLM最近一直炼小的语言模型，去打造能在端侧设备上跑起来的大模型。在这样的一个小模型上，我们有机会做大量实验，从而把影响模型训练的各个方面都搞清楚，总结出tokenizer裁剪、架构微调、参数继承和多轮训练这4项技术来提升模型效果。基于这些训练策略，我们打造出盘古π-1.5B-Pro模型，只有1.5B参数量，可以很轻松地在端侧设备上跑起来。感谢大家的carry，整体模型评测结果还是很喜人的：最近几个月，小模型越来越卷了，每天都不断地被新的模型轰炸。。。 相比投稿的时候，我们的盘古π-1.5B模型的效果也提升了不少，待整理下结果和大家分享。对论文的详细介绍可见专栏：极致炼丹术：对“小”的大模型的优化重新思考盘古π论文链接如下：PanGu-π: Enhancing Language Model Architectures via Nonlinearity Compensation此外，和小伙伴们共同完成了一些工作，也被ICML接受了，相关论文和代码陆续更新中...",
+        "voteup_count": 88,
+        "updated_time": "2024-05-04 00:46:29",
+        "question_id": 651459078,
+        "user_id": "72e969d88ba05c9a2baaa5cbe434b342"
+    },
+    {
+        "answer_id": 3485219057,
+        "content": "10分钟前刚收到邮件，还好中了（不然要改投neurips我的旅游计划就废了）。分数供参考：rebuttal 前 3,5,6 => rebuttal 后 5,6,7 (confidence 3,3,3) 论文标题：Online Cascade Learning for Efficient Inference over Streams摘要：大型语言模型（LLM）被企业广泛用于处理数据流中的复杂任务，但其高昂的计算成本极大限制了应用场景。我们提出了 Online Cascade Learning （在线级联学习）这一新方法来解决这一挑战。该方法旨在建立一系列模型构成 Cascade，从简单的 Logistic Regression 模型开始，最终过渡到强大的 LLM，用合适大小的模型对应处理不同难度的任务。通过把 Online Cascade Learning 的过程规约为 Imitation Learning 问题，我们证明了所提出的在线学习算法可以实现 No-regret 的理论性能保证。实验结果显示，我们的方法在保证与GPT-3.5、Llama 2 70B 模型相近的准确率的同时，能够将推理成本降低高达 90%。后续会更新一个更详细的介绍在这里，欢迎感兴趣的朋友一起讨论。(有没有今年的开会群求拉)",
+        "voteup_count": 112,
+        "updated_time": "2024-05-02 09:18:24",
+        "question_id": 651459078,
+        "user_id": "c0b83a278e3cf514cd904d8acebad2da"
+    },
+    {
+        "answer_id": 3485379233,
+        "content": "AGI的一个重要标准就是模型能完成各种各样的任务，因此我们做了一个包含大量多模态任务的评测集，包含识别，感知，规划，应用等在内的162个多模态任务。评测结果表明目前最强的开源模型已经略微超过了GPT4V，其中包括shlab的InternVL和阿里的Qwen-VL，不过都还只是达到了及格线，我们论文通过任务地图，误差分析等工具给出了未来多模态模型需要提升的方向，欢迎大家关注。论文：https://arxiv.org/pdf/2404.16006.pdf主页：https://mmt-bench.github.io/",
+        "voteup_count": 37,
+        "updated_time": "2024-05-02 12:26:20",
+        "question_id": 651459078,
+        "user_id": "9a596ac4574bca580d48fe66c06b1e2e"
+    },
+    {
+        "answer_id": 3486209068,
+        "content": "和舍友一人中了一个6665/754，咱那个在arxiv上挂了一年，年初老板说要不投ICML，改下中了。",
+        "voteup_count": 16,
+        "updated_time": "2024-05-03 12:32:16",
+        "question_id": 651459078,
+        "user_id": "1f18035e582cd4b246889f7b2fdfd1f4"
+    },
+    {
+        "answer_id": 3485226454,
+        "content": "今年由于去年特殊原因，存下来几篇工作，加上学弟带飞，一共投了四篇。最后学弟那篇可惜，审稿人没有回复，我这边一下re三篇有点力不从心，所以直接放弃了一篇，花了两周时间re了两篇，最终结果都是好的，今天睡觉惊醒了好几次。稍微介绍下我的工作，我主要做演化强化学习融合，致力于解决各类优化问题，中的这两篇工作都是做策略搜索的，我也正在研究一些其他工作，更容易落地的工作。后面我会尽快发出来。EvoRainbow: Combining Improvements in Evolutionary Reinforcement Learning for Policy Search这篇主要是系统分析了目前有的ERL工作的技术，从五个角度进行了拆解，给出了选择建议并类似于Rainbow，融合了一个新的框架得到了EvoRainbow。Value-Evolutionary-Based Reinforcement Learning这篇主要解决的是ERL社区对于value based RL方法的忽视，专门构建了特定的优化方案，并进行了大规模的评估与测试，证明了方案的有效性。我的工作代码都是会迅速开源的，欢迎大家关注！也欢迎大家加入ERL社区的研究中！另外感兴趣的可以看一下我之前的工作，当然还有和我的大哥们一起搞得文章，比如Sample-Efficient Quality-Diversity by Cooperative Coevolution  ICLR 2024 (888)演化强化学习算法最全Survey-三大方向-十多个研究分支ICML 2023 RACE: 首个在复杂任务下展示了进化算法能够进一步提升MARL的通用混合框架（MARL+演化算法+表征学习）ICLR 2023: 融合演化算法与强化学习进行策略搜索的新SOTA",
+        "voteup_count": 38,
+        "updated_time": "2024-05-02 09:31:07",
+        "question_id": 651459078,
+        "user_id": "0fdf06b1ee6834aa82caa99206c14b6e"
+    },
+    {
+        "answer_id": 3485422831,
+        "content": "764被拒了 而且连个理由都没有 他甚至不愿意复制粘贴一下4的review？",
+        "voteup_count": 12,
+        "updated_time": "2024-05-02 13:31:35",
+        "question_id": 651459078,
+        "user_id": "89984258897a11258ad9ed922c460fa0"
+    },
+    {
+        "answer_id": 3485397640,
+        "content": "一作中了两篇ICML，分别是扩散模型在文生图领域（ Mastering Text-to-Image Diffusion: Recaptioning, Planning, and Generating with Multimodal LLMs）和AI for Science 领域的应用，也是团队的重点关注方向。目前我们的文生图工作（https://github.com/YangLing0818/RPG-DiffusionMaster）一直在收集使用者的意见和反馈，之后几个月将会迎来重大更新，用于满足更复杂、更贴近真实世界的生成需求，欢迎大家交流合作！",
+        "voteup_count": 26,
+        "updated_time": "2024-05-03 16:59:32",
+        "question_id": 651459078,
+        "user_id": "af2cb22d2f351f447beeddcbdeba60b7"
+    },
+    {
+        "answer_id": 3485867199,
+        "content": "7555拒了，这次听说好多全正分被拒",
+        "voteup_count": 6,
+        "updated_time": "2024-05-03 00:02:46",
+        "question_id": 651459078,
+        "user_id": "c20a2190b786bb1bf49b364263172505"
+    },
+    {
+        "answer_id": 3485346778,
+        "content": "755被拒，confidence223，搞理论太难了，开始意见表明审稿人没看懂，反复拉扯解释，最后说认可贡献了，但说论文写得有点混乱。最后AC说还需好好修改论文才能接收，略感无语。",
+        "voteup_count": 30,
+        "updated_time": "2024-05-02 11:42:24",
+        "question_id": 651459078,
+        "user_id": "eb44e97e4c6d3aa8f13a5aae49ec1221"
+    },
+    {
+        "answer_id": 3454951783,
+        "content": "5.2 update：中了中了！这次录取率27.5%，创历史新高。不过为什么没划分Oral，多少差点意思 4.14 update:看到王梦迪教授的帖子，目前ICML整体的分数：21%的文章≥5.529%的文章≥5.0按25%的接受率来算，5.5分以上都很有希望，5-5.5的有50%的概率抽奖-------------------------今年poster和oral的bar会是多少呢   ",
+        "voteup_count": 30,
+        "updated_time": "2024-05-02 08:59:22",
+        "question_id": 651459078,
+        "user_id": "09bb2b209b65035dff8c833a59f2b1fb"
+    },
+    {
+        "answer_id": 3485220773,
+        "content": "8545寄了",
+        "voteup_count": 0,
+        "updated_time": "2024-05-02 09:07:53",
+        "question_id": 651459078,
+        "user_id": "1ad45228594811dad232aad897487080"
+    },
+    {
+        "answer_id": 3485268919,
+        "content": "中了中了！！！激动了几天，辗转难眠，终于尘埃落定了",
+        "voteup_count": 6,
+        "updated_time": "2024-05-02 10:10:56",
+        "question_id": 651459078,
+        "user_id": "0a44a1f71ba1b60f7ab7a8ac62ebc910"
+    },
+    {
+        "answer_id": 3485386631,
+        "content": "中了一篇，维也纳旅游力",
+        "voteup_count": 3,
+        "updated_time": "2024-05-02 12:36:58",
+        "question_id": 651459078,
+        "user_id": "70981995cb98f02fbfc2d6f16642cde6"
+    },
+    {
+        "answer_id": 3485505257,
+        "content": "以后我称呼学长要用敬语了",
+        "voteup_count": 2,
+        "updated_time": "2024-05-02 15:33:02",
+        "question_id": 651459078,
+        "user_id": "1301bd8f0dba7d23c50cdd4d282b99d5"
+    },
+    {
+        "answer_id": 3485213747,
+        "content": "6666中了 感谢 labmates 导师 审稿人",
+        "voteup_count": 2,
+        "updated_time": "2024-05-02 08:58:36",
+        "question_id": 651459078,
+        "user_id": "c1e9923dabcb0a737ab9909416e0563f"
+    },
+    {
+        "answer_id": 3485198772,
+        "content": "结果已出，openreview上可以查结果了！",
+        "voteup_count": 1,
+        "updated_time": "2024-05-02 08:37:52",
+        "question_id": 651459078,
+        "user_id": "dad7801b38063de3f6e996358172d0d6"
+    },
+    {
+        "answer_id": 3456231251,
+        "content": "hjsuifhuig ",
+        "voteup_count": 3,
+        "updated_time": "2024-04-06 15:14:00",
+        "question_id": 651459078,
+        "user_id": "6a8c28977b1ef5a83ec7639c5b39dea6"
+    },
+    {
+        "answer_id": 3485238061,
+        "content": "中了，感谢知乎朋友们的陪伴，我们下次见！",
+        "voteup_count": 1,
+        "updated_time": "2024-05-02 09:31:20",
+        "question_id": 651459078,
+        "user_id": "b4652d86cd4e2a0a0da23144fabb9576"
+    },
+    {
+        "answer_id": 3484264777,
+        "content": "出结果了，中国时间上午5月2号8.24出的看了pc写的decision，很负责——————-占个坑，是中国时间什么时候出结果呀",
+        "voteup_count": 1,
+        "updated_time": "2024-05-02 10:17:56",
+        "question_id": 651459078,
+        "user_id": "3fcf92aea0af6129cc0036f68812b035"
+    },
+    {
+        "answer_id": 3486504604,
+        "content": "中了，所以评价就是“真好”",
+        "voteup_count": 0,
+        "updated_time": "2024-05-03 19:33:52",
+        "question_id": 651459078,
+        "user_id": "6e928cec17dae4f3183bd9d1a7ad3226"
+    },
+    {
+        "answer_id": 3485525233,
+        "content": "有没有ICML2024参会群，拉我一个",
+        "voteup_count": 0,
+        "updated_time": "2024-05-02 16:00:11",
+        "question_id": 651459078,
+        "user_id": "d922d44057429ba3112b0a967161e7cc"
+    },
+    {
+        "answer_id": 3485443628,
+        "content": "7 6 4 4中了感恩认真的AC",
+        "voteup_count": 0,
+        "updated_time": "2024-05-02 14:02:49",
+        "question_id": 651459078,
+        "user_id": "320b41500d6e5532e3099003db9a07e2"
+    },
+    {
+        "answer_id": 3485213882,
+        "content": "中了，还愿！",
+        "voteup_count": 0,
+        "updated_time": "2024-05-02 08:58:48",
+        "question_id": 651459078,
+        "user_id": "aec81dede21e9d877ccf9a37d3850602"
+    }
+]
